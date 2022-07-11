@@ -6,7 +6,22 @@
     <description>Recent content on Hugo Cactus Theme</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Sun, 10 Jul 2022 10:24:48 +0800</lastBuildDate><atom:link href="https://lzy175.github.io/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Mon, 11 Jul 2022 10:09:51 +0800</lastBuildDate><atom:link href="https://lzy175.github.io/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Netty</title>
+      <link>https://lzy175.github.io/posts/netty/</link>
+      <pubDate>Mon, 11 Jul 2022 10:09:51 +0800</pubDate>
+      
+      <guid>https://lzy175.github.io/posts/netty/</guid>
+      <description>IO与Netty实操问题 （分享以实际操作中遇到的问题为主，一些基础知识不会过多陈述）
+(34条消息) 基于NIO的Socket通信(使用Java NIO的综合示例讲解)_Java新生代的博客-CSDN博客_java nio socket
+两台计算机之间的通信，本质上可以理解为两台不同主机的进程之间的通信，简单的例子就是浏览器从服务器端接收网页、文件等。
+根据OSI七层模型，计算机通信实际传输以二进制形式的数据在物理层进行，所以在通信中，需要通过序列化方式，将传输的对象转化为二进制形式流，这种在网络中以二进制形式传输的流就是IO流，对于应用端来说是输入流，对于服务端来说是输出流。
+使用计算机的不同端口，可以编写一个IO通信的简单Demo。
+客户端代码
+package com.lzy.socketDemo; import com.sun.org.apache.xpath.internal.objects.XString; import java.io.*; import java.net.Inet4Address; import java.net.InetSocketAddress; import java.net.Socket; import java.net.UnknownHostException; /** * @ClassName: Client * @Description: socket客户端 * @author: lzy * @date: 2022/7/11 11:07 */ public class Client { public static void main(String[] args) throws IOException { Socket socket = new Socket(); // 设置超时时间 socket.setSoTimeout(8000); socket.connect(new InetSocketAddress(Inet4Address.getLocalHost(), 2000), 8000); System.out.println(&amp;#34;已发起服务器连接，并进入后续流程～&amp;#34;); System.out.println(&amp;#34;客户端信息：&amp;#34; + socket.getLocalAddress() + &amp;#34; P:&amp;#34; + socket.</description>
+    </item>
+    
     <item>
       <title>First_blog</title>
       <link>https://lzy175.github.io/posts/first_blog/</link>
