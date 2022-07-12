@@ -6,22 +6,7 @@
     <description>Recent content on Hugo Cactus Theme</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Mon, 11 Jul 2022 10:09:51 +0800</lastBuildDate><atom:link href="https://lzy175.github.io/index.xml" rel="self" type="application/rss+xml" />
-    <item>
-      <title>Netty</title>
-      <link>https://lzy175.github.io/posts/netty/</link>
-      <pubDate>Mon, 11 Jul 2022 10:09:51 +0800</pubDate>
-      
-      <guid>https://lzy175.github.io/posts/netty/</guid>
-      <description>IO与Netty实操问题 （分享以实际操作中遇到的问题为主，一些基础知识不会过多陈述）
-(34条消息) 基于NIO的Socket通信(使用Java NIO的综合示例讲解)_Java新生代的博客-CSDN博客_java nio socket
-两台计算机之间的通信，本质上可以理解为两台不同主机的进程之间的通信，简单的例子就是浏览器从服务器端接收网页、文件等。
-根据OSI七层模型，计算机通信实际传输以二进制形式的数据在物理层进行，所以在通信中，需要通过序列化方式，将传输的对象转化为二进制形式流，这种在网络中以二进制形式传输的流就是IO流，对于应用端来说是输入流，对于服务端来说是输出流。
-使用计算机的不同端口，可以编写一个IO通信的简单Demo。
-客户端代码
-package com.lzy.socketDemo; import com.sun.org.apache.xpath.internal.objects.XString; import java.io.*; import java.net.Inet4Address; import java.net.InetSocketAddress; import java.net.Socket; import java.net.UnknownHostException; /** * @ClassName: Client * @Description: socket客户端 * @author: lzy * @date: 2022/7/11 11:07 */ public class Client { public static void main(String[] args) throws IOException { Socket socket = new Socket(); // 设置超时时间 socket.setSoTimeout(8000); socket.connect(new InetSocketAddress(Inet4Address.getLocalHost(), 2000), 8000); System.out.println(&amp;#34;已发起服务器连接，并进入后续流程～&amp;#34;); System.out.println(&amp;#34;客户端信息：&amp;#34; + socket.getLocalAddress() + &amp;#34; P:&amp;#34; + socket.</description>
-    </item>
-    
+    <lastBuildDate>Sun, 10 Jul 2022 10:24:48 +0800</lastBuildDate><atom:link href="https://lzy175.github.io/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>First_blog</title>
       <link>https://lzy175.github.io/posts/first_blog/</link>
@@ -40,21 +25,34 @@ package com.lzy.socketDemo; import com.sun.org.apache.xpath.internal.objects.XSt
       <guid>https://lzy175.github.io/posts/%E5%A4%9A%E8%B7%AF%E5%A4%8D%E7%94%A8io%E7%9A%84%E5%BA%95%E5%B1%82%E5%AE%9E%E7%8E%B0%E5%8F%8A%E7%A9%BA%E8%BD%AE%E8%AF%A2bug/</guid>
       <description>Netty中的NIO实现了reactor模式，通过将感兴趣的事件（比如刻度数据到达，新的套接字连接等等）注册到selector中，完成线程的异步通知。
 这一过程的具体操作通过三个重要组件来完成，channel、buffer、selector。
-channel：相当于IO操作的载体，可以近似理解为一个硬件设备，可以执行read/write，类似流，但流的读写单向，channel的读写双向。
-buffer：buffer用于和通道进行交互，本质上是一块可以写入数据，也可以从中读取数据的内存。
-selector：选择器是实现异步回调的关键，作用是检测各个通道，channel将关心的事件注册到selector上，selector能够知晓通道是否做好了数据准备，这样一个单线程就可以管理多个channel，从而管理多个网络连接。（这里思想在redis单线程中体现的极为明显）
+**channel：**相当于IO操作的载体，可以近似理解为一个硬件设备，可以执行read/write，类似流，但流的读写单向，channel的读写双向。
+**buffer：**buffer用于和通道进行交互，本质上是一块可以写入数据，也可以从中读取数据的内存。
+**selector：**选择器是实现异步回调的关键，作用是检测各个通道，channel将关心的事件注册到selector上，selector能够知晓通道是否做好了数据准备，这样一个单线程就可以管理多个channel，从而管理多个网络连接。（这里思想在redis单线程中体现的极为明显）
 底层实现 IO多路复用，从表面上可以简单理解为一种机制，一个进程可以监控多个文件描述符，一旦有某个描述符就绪，就能通知进程进行相应的读写操作。从宏观上，如果系统要对外提供一个进程可以监控多个连接方法的话，那么实现过程中需要考虑的问题有以下几条：
 系统如何知道进程需要监控哪些连接和事件（fd）； 系统要使用什么方法对这些fd的状态进行监控； 系统监控到活跃事件之后，如何通知进程。 linux操作系统中，select、poll和epoll三种系统调用都可以解决以上三个问题，进而实现IO的多路复用。
 select select监控连接的流程如下：
 再调用select之前，系统需要知道需要监控哪些fd可读、可写、异常状态，这些事件分别存放在三个fd_set的数组中； 调用select时，系统要把fd_set从用户空间拷贝到内核空间（发生一次空间切换），内核空间拿到后，采用轮询的方式遍历fd_set数组，一个个扫描对应的事件是否准备就绪； 扫描到有对应事件发生后，内核会将把那些没有发生的事件的句柄清除，然后将fd_set发送给应用进程（又发生一次空间切换）。 引用进程拿到这个返回的fd_set之后，就知道哪些已经是准备就绪的事件了，对对应的事件发起数据读取或者写入的操作。 缺点：
 每调用一下select，就要把三个fd_set数组从用户空间拷贝到内核空间，返回的时候还要再拷贝回来，当数组数据量很大的时候，消耗会很大； 内核需要将fd_set数组逐个遍历，检查哪些事件是准备就绪的，很耗时； fd_set数组有长度限制，32位系统是1024，64位系统是2048，也就是说select最多监控1024个连接。 poll poll主要就是再select的基础上作了两点改进：
-事件集合不在使用数组，而是使用链表，没有了长度限制；
-保存在链表里的，需要监控的fd信息采用了poll_fd的文件格式，select每一次调用都要重新注册感兴趣的事件和连接，poll不需要，pollfd保存了需要监控的事件集合，同时也保存了一个返回激活事件的fd事件集合。重新发送请求时不需要再次设置感兴趣的事件。
-epoll epoll目前是实现多路复用IO的主流系统调用，epoll采用一组方法调用来对事件进行监控。大致流程如下：
-epoll_create方法，向内核申请一个fd文件描述符作为内核事件监听表（B+树结构），这个描述符用来保存应用进程需要监控哪些fd和对应进程的事件； epoll_ctl方法，向事件监听表添加或者移除对应的fd和事件类型； epoll_wait方法，给需要监控的fd绑定回调事件，内核向事件表的fd绑定一个回调函数callback；当监控的fd活跃时，会调用callback函数把事件加入到一个活跃事件队列里面；epoll_wait返回的时候，会将活跃时间队列里面的fd和事件类型返回给应用进程。 总的来说，epoll事先就在内核空间创建了一个事件监听表，后续操作只要向表内注册和删除感兴趣事件就行，因为本来就在内核空间，避免了两个空间的来回复制；并且给每个感兴趣的fd绑定了一个回调函数，当事件激活后会主动调用回调函数，将fd加入到活跃事件队列，避免了遍历操作。
+事件集合不在使用数组，而是使用链表，没有了长度限制； 保存在链表里的，需要监控的fd信息采用了poll_fd的文件格式，select每一次调用都要重新注册感兴趣的事件和连接，poll不需要，pollfd保存了需要监控的事件集合，同时也保存了一个返回激活事件的fd事件集合。重新发送请求时不需要再次设置感兴趣的事件。 epoll epoll目前是实现多路复用IO的主流系统调用，epoll采用一组方法调用来对事件进行监控。大致流程如下：
+epoll_create方法，向内核申请一个fd文件描述符作为内核事件监听表（B+树结构），这个描述符用来保存应用进程需要监控哪些fd和对应进程的事件； epoll_ctl方法，向事件监听表添加或者移除对应的fd和事件类型； epoll_wait方法，给需要监控的fd绑定回调事件，内核向事件表的fd绑定一个回调函数callback当监控的fd活跃时，会调用callback函数把事件加入到一个活跃事件队列里面，epoll_wait返回的时候，会将活跃时间队列里面的fd和事件类型返回给应用进程。 总的来说，epoll事先就在内核空间创建了一个事件监听表，后续操作只要向表内注册和删除感兴趣事件就行，因为本来就在内核空间，避免了两个空间的来回复制；并且给每个感兴趣的fd绑定了一个回调函数，当事件激活后会主动调用回调函数，将fd加入到活跃事件队列，避免了遍历操作。
 jdk的epoll空轮询bug 使用IO复用，Linux下一般默认就是epoll，Java NIO在Linux下默认也是epoll机制，但是JDK中epoll的实现却是有漏洞的，其中最有名的java nio epoll bug就是即使是关注的select轮询事件返回数量为0，NIO照样不断的从select本应该阻塞的Selector.select()/Selector.select(timeout)中wake up出来，导致CPU 100%问题。
 空轮询的伪代码：
 // 轮询处理 while (true) { if (socket.isOpen()) { //在注册的键中选择已准备就绪的事件（这里可能会出现空轮询bug） selector.select(); //已选择键集 Set&amp;lt;SelectionKey&amp;gt; keys = selector.selectedKeys(); Iterator&amp;lt;SelectionKey&amp;gt; iterator = keys.iterator(); //处理准备就绪的事件 while (iterator.hasNext()) { /** 相关功能代码 */ } } } 在上述代码中，在调用selector.select()时，如果没有对应事件发生，线程应该阻塞在这，但是实际情况并不会，线程继续执行，selector.select()返回numKeys是0，所以下面本应该对key值进行遍历的事件处理根本执行不了，又回到最上面的while(true)循环，循环往复，不断的轮询，直到linux系统出现100%的CPU情况，其它执行任务干不了活，最终导致程序崩溃。有意思的是，这个bug的产生原因到现在还在不断甩锅中，linux方面说是jdk的问题，jdk方面说是linux的epoll的问题。</description>
+    </item>
+    
+    <item>
+      <title>IO与Netty实操问题</title>
+      <link>https://lzy175.github.io/posts/netty/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://lzy175.github.io/posts/netty/</guid>
+      <description>IO与Netty实操问题 （分享以实际操作中遇到的问题为主，一些基础知识不会过多陈述）
+(34条消息) 基于NIO的Socket通信(使用Java NIO的综合示例讲解)_Java新生代的博客-CSDN博客_java nio socket
+两台计算机之间的通信，本质上可以理解为两台不同主机的进程之间的通信，简单的例子就是浏览器从服务器端接收网页、文件等。
+根据OSI七层模型，计算机通信实际传输以二进制形式的数据在物理层进行，所以在通信中，需要通过序列化方式，将传输的对象转化为二进制形式流，这种在网络中以二进制形式传输的流就是IO流，对于应用端来说是输入流，对于服务端来说是输出流。
+使用计算机的不同端口，可以编写一个IO通信的简单Demo。
+客户端代码
+package com.lzy.socketDemo; import com.sun.org.apache.xpath.internal.objects.XString; import java.io.*; import java.net.Inet4Address; import java.net.InetSocketAddress; import java.net.Socket; import java.net.UnknownHostException; /** * @ClassName: Client * @Description: socket客户端 * @author: lzy * @date: 2022/7/11 11:07 */ public class Client { public static void main(String[] args) throws IOException { Socket socket = new Socket(); // 设置超时时间 socket.setSoTimeout(8000); socket.connect(new InetSocketAddress(Inet4Address.getLocalHost(), 2000), 8000); System.out.println(&amp;#34;已发起服务器连接，并进入后续流程～&amp;#34;); System.out.println(&amp;#34;客户端信息：&amp;#34; + socket.getLocalAddress() + &amp;#34; P:&amp;#34; + socket.</description>
     </item>
     
   </channel>

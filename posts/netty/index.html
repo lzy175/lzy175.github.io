@@ -7,7 +7,7 @@
 <meta name="author" content="ZhuoY Li">
 <meta name="description" content="It&#39;s never too late to learn.">
 <meta name="generator" content="Hugo 0.101.0" />
-<title>Netty</title>
+<title>IO与Netty实操问题</title>
 <link rel="shortcut icon" href="https://lzy175.github.io/images/favicon.ico">
 <link rel="stylesheet" href="https://lzy175.github.io/css/style.css">
 <link rel="stylesheet" href="https://lzy175.github.io/css/highlight.css">
@@ -21,7 +21,7 @@
 <link href="https://lzy175.github.io/index.xml" rel="alternate" type="application/rss+xml" title="Hugo Cactus Theme" />
 
 
-<meta property="og:title" content="Netty" />
+<meta property="og:title" content="IO与Netty实操问题" />
 <meta property="og:description" content="IO与Netty实操问题 （分享以实际操作中遇到的问题为主，一些基础知识不会过多陈述）
 (34条消息) 基于NIO的Socket通信(使用Java NIO的综合示例讲解)_Java新生代的博客-CSDN博客_java nio socket
 两台计算机之间的通信，本质上可以理解为两台不同主机的进程之间的通信，简单的例子就是浏览器从服务器端接收网页、文件等。
@@ -31,24 +31,24 @@
 package com.lzy.socketDemo; import com.sun.org.apache.xpath.internal.objects.XString; import java.io.*; import java.net.Inet4Address; import java.net.InetSocketAddress; import java.net.Socket; import java.net.UnknownHostException; /** * @ClassName: Client * @Description: socket客户端 * @author: lzy * @date: 2022/7/11 11:07 */ public class Client { public static void main(String[] args) throws IOException { Socket socket = new Socket(); // 设置超时时间 socket.setSoTimeout(8000); socket.connect(new InetSocketAddress(Inet4Address.getLocalHost(), 2000), 8000); System.out.println(&#34;已发起服务器连接，并进入后续流程～&#34;); System.out.println(&#34;客户端信息：&#34; &#43; socket.getLocalAddress() &#43; &#34; P:&#34; &#43; socket." />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://lzy175.github.io/posts/netty/" /><meta property="article:section" content="posts" />
-<meta property="article:published_time" content="2022-07-11T10:09:51+08:00" />
-<meta property="article:modified_time" content="2022-07-11T10:09:51+08:00" />
 
 
 
-<meta itemprop="name" content="Netty">
+
+
+<meta itemprop="name" content="IO与Netty实操问题">
 <meta itemprop="description" content="IO与Netty实操问题 （分享以实际操作中遇到的问题为主，一些基础知识不会过多陈述）
 (34条消息) 基于NIO的Socket通信(使用Java NIO的综合示例讲解)_Java新生代的博客-CSDN博客_java nio socket
 两台计算机之间的通信，本质上可以理解为两台不同主机的进程之间的通信，简单的例子就是浏览器从服务器端接收网页、文件等。
 根据OSI七层模型，计算机通信实际传输以二进制形式的数据在物理层进行，所以在通信中，需要通过序列化方式，将传输的对象转化为二进制形式流，这种在网络中以二进制形式传输的流就是IO流，对于应用端来说是输入流，对于服务端来说是输出流。
 使用计算机的不同端口，可以编写一个IO通信的简单Demo。
 客户端代码
-package com.lzy.socketDemo; import com.sun.org.apache.xpath.internal.objects.XString; import java.io.*; import java.net.Inet4Address; import java.net.InetSocketAddress; import java.net.Socket; import java.net.UnknownHostException; /** * @ClassName: Client * @Description: socket客户端 * @author: lzy * @date: 2022/7/11 11:07 */ public class Client { public static void main(String[] args) throws IOException { Socket socket = new Socket(); // 设置超时时间 socket.setSoTimeout(8000); socket.connect(new InetSocketAddress(Inet4Address.getLocalHost(), 2000), 8000); System.out.println(&#34;已发起服务器连接，并进入后续流程～&#34;); System.out.println(&#34;客户端信息：&#34; &#43; socket.getLocalAddress() &#43; &#34; P:&#34; &#43; socket."><meta itemprop="datePublished" content="2022-07-11T10:09:51+08:00" />
-<meta itemprop="dateModified" content="2022-07-11T10:09:51+08:00" />
+package com.lzy.socketDemo; import com.sun.org.apache.xpath.internal.objects.XString; import java.io.*; import java.net.Inet4Address; import java.net.InetSocketAddress; import java.net.Socket; import java.net.UnknownHostException; /** * @ClassName: Client * @Description: socket客户端 * @author: lzy * @date: 2022/7/11 11:07 */ public class Client { public static void main(String[] args) throws IOException { Socket socket = new Socket(); // 设置超时时间 socket.setSoTimeout(8000); socket.connect(new InetSocketAddress(Inet4Address.getLocalHost(), 2000), 8000); System.out.println(&#34;已发起服务器连接，并进入后续流程～&#34;); System.out.println(&#34;客户端信息：&#34; &#43; socket.getLocalAddress() &#43; &#34; P:&#34; &#43; socket.">
+
 <meta itemprop="wordCount" content="988">
 <meta itemprop="keywords" content="" />
 <meta name="twitter:card" content="summary"/>
-<meta name="twitter:title" content="Netty"/>
+<meta name="twitter:title" content="IO与Netty实操问题"/>
 <meta name="twitter:description" content="IO与Netty实操问题 （分享以实际操作中遇到的问题为主，一些基础知识不会过多陈述）
 (34条消息) 基于NIO的Socket通信(使用Java NIO的综合示例讲解)_Java新生代的博客-CSDN博客_java nio socket
 两台计算机之间的通信，本质上可以理解为两台不同主机的进程之间的通信，简单的例子就是浏览器从服务器端接收网页、文件等。
@@ -78,10 +78,10 @@ package com.lzy.socketDemo; import com.sun.org.apache.xpath.internal.objects.XSt
         
 <article class="post">
     <header>
-        <h1>Netty</h1>
+        <h1>IO与Netty实操问题</h1>
         <h2 class="subtitle"></h2>
         <h2 class="headline">
-        July 11, 2022
+        January 1, 0001
         <br>
         
         </h2>
@@ -556,7 +556,7 @@ package com.lzy.socketDemo; import com.sun.org.apache.xpath.internal.objects.XSt
     </div>
     </a>
     <section id="sharing">
-        <a class="twitter" href="https://twitter.com/intent/tweet?text=https%3a%2f%2flzy175.github.io%2fposts%2fnetty%2f - Netty by @Your%20Twitter%20account"><span class="icon-twitter"> tweet</span></a>
+        <a class="twitter" href="https://twitter.com/intent/tweet?text=https%3a%2f%2flzy175.github.io%2fposts%2fnetty%2f - IO%e4%b8%8eNetty%e5%ae%9e%e6%93%8d%e9%97%ae%e9%a2%98 by @Your%20Twitter%20account"><span class="icon-twitter"> tweet</span></a>
 
 <a class="facebook" href="#" onclick="
     window.open(
