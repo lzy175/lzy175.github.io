@@ -285,7 +285,7 @@ package com.lzy.socketDemo; import com.sun.org.apache.xpath.internal.objects.XSt
 </span></span><span style="display:flex;"><span>            <span style="color:#75715e">//轮询处理
 </span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>            <span style="color:#66d9ef">while</span> <span style="color:#f92672">(</span><span style="color:#66d9ef">true</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
 </span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>socket<span style="color:#f92672">.</span><span style="color:#a6e22e">isOpen</span><span style="color:#f92672">())</span> <span style="color:#f92672">{</span>
-</span></span><span style="display:flex;"><span>                    <span style="color:#75715e">//在注册的键中选择已准备就绪的事件
+</span></span><span style="display:flex;"><span>                    <span style="color:#75715e">//在注册的键中选择已准备就绪的事件（这里可能会出现空轮询bug）
 </span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>                    selector<span style="color:#f92672">.</span><span style="color:#a6e22e">select</span><span style="color:#f92672">();</span>
 </span></span><span style="display:flex;"><span>                    <span style="color:#75715e">//已选择键集
 </span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>                    Set<span style="color:#f92672">&lt;</span>SelectionKey<span style="color:#f92672">&gt;</span> keys <span style="color:#f92672">=</span> selector<span style="color:#f92672">.</span><span style="color:#a6e22e">selectedKeys</span><span style="color:#f92672">();</span>
@@ -598,6 +598,10 @@ package com.lzy.socketDemo; import com.sun.org.apache.xpath.internal.objects.XSt
     
         <li>
             <a href="https://lzy175.github.io/posts/first_blog/">First_blog<aside class="dates">Jul 10 2022</aside></a>
+        </li>
+    
+        <li>
+            <a href="https://lzy175.github.io/posts/%E5%A4%9A%E8%B7%AF%E5%A4%8D%E7%94%A8io%E7%9A%84%E5%BA%95%E5%B1%82%E5%AE%9E%E7%8E%B0%E5%8F%8A%E7%A9%BA%E8%BD%AE%E8%AF%A2bug/">多路复用IO的底层实现及空轮询bug<aside class="dates">Jun 10 2021</aside></a>
         </li>
     
 </ul>
