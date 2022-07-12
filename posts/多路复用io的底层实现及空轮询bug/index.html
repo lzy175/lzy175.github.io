@@ -30,27 +30,15 @@ selector：选择器是实现异步回调的关键，作用是检测各个通道
 底层实现 IO多路复用，从表面上可以简单理解为一种机制，一个进程可以监控多个文件描述符，一旦有某个描述符就绪，就能通知进程进行相应的读写操作。从宏观上，如果系统要对外提供一个进程可以监控多个连接方法的话，那么实现过程中需要考虑的问题有以下几条：
 系统如何知道进程需要监控哪些连接和事件（fd）； 系统要使用什么方法对这些fd的状态进行监控； 系统监控到活跃事件之后，如何通知进程。 linux操作系统中，select、poll和epoll三种系统调用都可以解决以上三个问题，进而实现IO的多路复用。
 select select监控连接的流程如下：
-再调用select之前，系统需要知道需要监控哪些fd可读、可写、异常状态，这些事件分别存放在三个fd_set的数组中；
-调用select时，系统要把fd_set从用户空间拷贝到内核空间（发生一次空间切换），内核空间拿到后，采用轮询的方式遍历fd_set数组，一个个扫描对应的事件是否准备就绪；
-扫描到有对应事件发生后，内核会将把那些没有发生的事件的句柄清除，然后将fd_set发送给应用进程（又发生一次空间切换）。
-引用进程拿到这个返回的fd_set之后，就知道哪些已经是准备就绪的事件了，对对应的事件发起数据读取或者写入的操作。（这里借用知乎勤劳大佬的图片）
-缺点：
-每调用一下select，就要把三个fd_set数组从用户空间拷贝到内核空间，返回的时候还要再拷贝回来，当数组数据量很大的时候，消耗会很大；
-内核需要将fd_set数组逐个遍历，检查哪些事件是准备就绪的，很耗时；
-fd_set数组有长度限制，32位系统是1024，64位系统是2048，也就是说select最多监控1024个连接。
-poll poll主要就是再select的基础上作了两点改进：
+再调用select之前，系统需要知道需要监控哪些fd可读、可写、异常状态，这些事件分别存放在三个fd_set的数组中； 调用select时，系统要把fd_set从用户空间拷贝到内核空间（发生一次空间切换），内核空间拿到后，采用轮询的方式遍历fd_set数组，一个个扫描对应的事件是否准备就绪； 扫描到有对应事件发生后，内核会将把那些没有发生的事件的句柄清除，然后将fd_set发送给应用进程（又发生一次空间切换）。 引用进程拿到这个返回的fd_set之后，就知道哪些已经是准备就绪的事件了，对对应的事件发起数据读取或者写入的操作。 缺点：
+每调用一下select，就要把三个fd_set数组从用户空间拷贝到内核空间，返回的时候还要再拷贝回来，当数组数据量很大的时候，消耗会很大； 内核需要将fd_set数组逐个遍历，检查哪些事件是准备就绪的，很耗时； fd_set数组有长度限制，32位系统是1024，64位系统是2048，也就是说select最多监控1024个连接。 poll poll主要就是再select的基础上作了两点改进：
 事件集合不在使用数组，而是使用链表，没有了长度限制；
 保存在链表里的，需要监控的fd信息采用了poll_fd的文件格式，select每一次调用都要重新注册感兴趣的事件和连接，poll不需要，pollfd保存了需要监控的事件集合，同时也保存了一个返回激活事件的fd事件集合。重新发送请求时不需要再次设置感兴趣的事件。
 epoll epoll目前是实现多路复用IO的主流系统调用，epoll采用一组方法调用来对事件进行监控。大致流程如下：
-1、epoll_create方法，向内核申请一个fd文件描述符作为内核事件监听表（B&#43;树结构），这个描述符用来保存应用进程需要监控哪些fd和对应进程的事件；
-2、epoll_ctl方法，向事件监听表添加或者移除对应的fd和事件类型；
-3、epoll_wait方法，给需要监控的fd绑定回调事件，内核向事件表的fd绑定一个回调函数callback；
-当监控的fd活跃时，会调用callback函数把事件加入到一个活跃事件队列里面；
-epoll_wait返回的时候，会将活跃时间队列里面的fd和事件类型返回给应用进程。
-总的来说，epoll事先就在内核空间创建了一个事件监听表，后续操作只要向表内注册和删除感兴趣事件就行，因为本来就在内核空间，避免了两个空间的来回复制；并且给每个感兴趣的fd绑定了一个回调函数，当事件激活后会主动调用回调函数，将fd加入到活跃事件队列，避免了遍历操作。
+epoll_create方法，向内核申请一个fd文件描述符作为内核事件监听表（B&#43;树结构），这个描述符用来保存应用进程需要监控哪些fd和对应进程的事件； epoll_ctl方法，向事件监听表添加或者移除对应的fd和事件类型； epoll_wait方法，给需要监控的fd绑定回调事件，内核向事件表的fd绑定一个回调函数callback；当监控的fd活跃时，会调用callback函数把事件加入到一个活跃事件队列里面；epoll_wait返回的时候，会将活跃时间队列里面的fd和事件类型返回给应用进程。 总的来说，epoll事先就在内核空间创建了一个事件监听表，后续操作只要向表内注册和删除感兴趣事件就行，因为本来就在内核空间，避免了两个空间的来回复制；并且给每个感兴趣的fd绑定了一个回调函数，当事件激活后会主动调用回调函数，将fd加入到活跃事件队列，避免了遍历操作。
 jdk的epoll空轮询bug 使用IO复用，Linux下一般默认就是epoll，Java NIO在Linux下默认也是epoll机制，但是JDK中epoll的实现却是有漏洞的，其中最有名的java nio epoll bug就是即使是关注的select轮询事件返回数量为0，NIO照样不断的从select本应该阻塞的Selector.select()/Selector.select(timeout)中wake up出来，导致CPU 100%问题。
 空轮询的伪代码：
-// 轮询处理 while (true) { if (socket.isOpen()) { //在注册的键中选择已准备就绪的事件（这里可能会出现空轮询bug） selector.select(); //已选择键集 Set&lt;SelectionKey&gt; keys = selector.selectedKeys(); Iterator&lt;SelectionKey&gt; iterator = keys.iterator(); //处理准备就绪的事件 while (iterator.hasNext()) { /** 相关功能代码 */ } } } 在上述代码中，在调用selector." />
+// 轮询处理 while (true) { if (socket.isOpen()) { //在注册的键中选择已准备就绪的事件（这里可能会出现空轮询bug） selector.select(); //已选择键集 Set&lt;SelectionKey&gt; keys = selector.selectedKeys(); Iterator&lt;SelectionKey&gt; iterator = keys.iterator(); //处理准备就绪的事件 while (iterator.hasNext()) { /** 相关功能代码 */ } } } 在上述代码中，在调用selector.select()时，如果没有对应事件发生，线程应该阻塞在这，但是实际情况并不会，线程继续执行，selector.select()返回numKeys是0，所以下面本应该对key值进行遍历的事件处理根本执行不了，又回到最上面的while(true)循环，循环往复，不断的轮询，直到linux系统出现100%的CPU情况，其它执行任务干不了活，最终导致程序崩溃。有意思的是，这个bug的产生原因到现在还在不断甩锅中，linux方面说是jdk的问题，jdk方面说是linux的epoll的问题。" />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://lzy175.github.io/posts/%E5%A4%9A%E8%B7%AF%E5%A4%8D%E7%94%A8io%E7%9A%84%E5%BA%95%E5%B1%82%E5%AE%9E%E7%8E%B0%E5%8F%8A%E7%A9%BA%E8%BD%AE%E8%AF%A2bug/" /><meta property="article:section" content="posts" />
 <meta property="article:published_time" content="2021-06-10T10:24:48+08:00" />
@@ -67,29 +55,17 @@ selector：选择器是实现异步回调的关键，作用是检测各个通道
 底层实现 IO多路复用，从表面上可以简单理解为一种机制，一个进程可以监控多个文件描述符，一旦有某个描述符就绪，就能通知进程进行相应的读写操作。从宏观上，如果系统要对外提供一个进程可以监控多个连接方法的话，那么实现过程中需要考虑的问题有以下几条：
 系统如何知道进程需要监控哪些连接和事件（fd）； 系统要使用什么方法对这些fd的状态进行监控； 系统监控到活跃事件之后，如何通知进程。 linux操作系统中，select、poll和epoll三种系统调用都可以解决以上三个问题，进而实现IO的多路复用。
 select select监控连接的流程如下：
-再调用select之前，系统需要知道需要监控哪些fd可读、可写、异常状态，这些事件分别存放在三个fd_set的数组中；
-调用select时，系统要把fd_set从用户空间拷贝到内核空间（发生一次空间切换），内核空间拿到后，采用轮询的方式遍历fd_set数组，一个个扫描对应的事件是否准备就绪；
-扫描到有对应事件发生后，内核会将把那些没有发生的事件的句柄清除，然后将fd_set发送给应用进程（又发生一次空间切换）。
-引用进程拿到这个返回的fd_set之后，就知道哪些已经是准备就绪的事件了，对对应的事件发起数据读取或者写入的操作。（这里借用知乎勤劳大佬的图片）
-缺点：
-每调用一下select，就要把三个fd_set数组从用户空间拷贝到内核空间，返回的时候还要再拷贝回来，当数组数据量很大的时候，消耗会很大；
-内核需要将fd_set数组逐个遍历，检查哪些事件是准备就绪的，很耗时；
-fd_set数组有长度限制，32位系统是1024，64位系统是2048，也就是说select最多监控1024个连接。
-poll poll主要就是再select的基础上作了两点改进：
+再调用select之前，系统需要知道需要监控哪些fd可读、可写、异常状态，这些事件分别存放在三个fd_set的数组中； 调用select时，系统要把fd_set从用户空间拷贝到内核空间（发生一次空间切换），内核空间拿到后，采用轮询的方式遍历fd_set数组，一个个扫描对应的事件是否准备就绪； 扫描到有对应事件发生后，内核会将把那些没有发生的事件的句柄清除，然后将fd_set发送给应用进程（又发生一次空间切换）。 引用进程拿到这个返回的fd_set之后，就知道哪些已经是准备就绪的事件了，对对应的事件发起数据读取或者写入的操作。 缺点：
+每调用一下select，就要把三个fd_set数组从用户空间拷贝到内核空间，返回的时候还要再拷贝回来，当数组数据量很大的时候，消耗会很大； 内核需要将fd_set数组逐个遍历，检查哪些事件是准备就绪的，很耗时； fd_set数组有长度限制，32位系统是1024，64位系统是2048，也就是说select最多监控1024个连接。 poll poll主要就是再select的基础上作了两点改进：
 事件集合不在使用数组，而是使用链表，没有了长度限制；
 保存在链表里的，需要监控的fd信息采用了poll_fd的文件格式，select每一次调用都要重新注册感兴趣的事件和连接，poll不需要，pollfd保存了需要监控的事件集合，同时也保存了一个返回激活事件的fd事件集合。重新发送请求时不需要再次设置感兴趣的事件。
 epoll epoll目前是实现多路复用IO的主流系统调用，epoll采用一组方法调用来对事件进行监控。大致流程如下：
-1、epoll_create方法，向内核申请一个fd文件描述符作为内核事件监听表（B&#43;树结构），这个描述符用来保存应用进程需要监控哪些fd和对应进程的事件；
-2、epoll_ctl方法，向事件监听表添加或者移除对应的fd和事件类型；
-3、epoll_wait方法，给需要监控的fd绑定回调事件，内核向事件表的fd绑定一个回调函数callback；
-当监控的fd活跃时，会调用callback函数把事件加入到一个活跃事件队列里面；
-epoll_wait返回的时候，会将活跃时间队列里面的fd和事件类型返回给应用进程。
-总的来说，epoll事先就在内核空间创建了一个事件监听表，后续操作只要向表内注册和删除感兴趣事件就行，因为本来就在内核空间，避免了两个空间的来回复制；并且给每个感兴趣的fd绑定了一个回调函数，当事件激活后会主动调用回调函数，将fd加入到活跃事件队列，避免了遍历操作。
+epoll_create方法，向内核申请一个fd文件描述符作为内核事件监听表（B&#43;树结构），这个描述符用来保存应用进程需要监控哪些fd和对应进程的事件； epoll_ctl方法，向事件监听表添加或者移除对应的fd和事件类型； epoll_wait方法，给需要监控的fd绑定回调事件，内核向事件表的fd绑定一个回调函数callback；当监控的fd活跃时，会调用callback函数把事件加入到一个活跃事件队列里面；epoll_wait返回的时候，会将活跃时间队列里面的fd和事件类型返回给应用进程。 总的来说，epoll事先就在内核空间创建了一个事件监听表，后续操作只要向表内注册和删除感兴趣事件就行，因为本来就在内核空间，避免了两个空间的来回复制；并且给每个感兴趣的fd绑定了一个回调函数，当事件激活后会主动调用回调函数，将fd加入到活跃事件队列，避免了遍历操作。
 jdk的epoll空轮询bug 使用IO复用，Linux下一般默认就是epoll，Java NIO在Linux下默认也是epoll机制，但是JDK中epoll的实现却是有漏洞的，其中最有名的java nio epoll bug就是即使是关注的select轮询事件返回数量为0，NIO照样不断的从select本应该阻塞的Selector.select()/Selector.select(timeout)中wake up出来，导致CPU 100%问题。
 空轮询的伪代码：
-// 轮询处理 while (true) { if (socket.isOpen()) { //在注册的键中选择已准备就绪的事件（这里可能会出现空轮询bug） selector.select(); //已选择键集 Set&lt;SelectionKey&gt; keys = selector.selectedKeys(); Iterator&lt;SelectionKey&gt; iterator = keys.iterator(); //处理准备就绪的事件 while (iterator.hasNext()) { /** 相关功能代码 */ } } } 在上述代码中，在调用selector."><meta itemprop="datePublished" content="2021-06-10T10:24:48+08:00" />
+// 轮询处理 while (true) { if (socket.isOpen()) { //在注册的键中选择已准备就绪的事件（这里可能会出现空轮询bug） selector.select(); //已选择键集 Set&lt;SelectionKey&gt; keys = selector.selectedKeys(); Iterator&lt;SelectionKey&gt; iterator = keys.iterator(); //处理准备就绪的事件 while (iterator.hasNext()) { /** 相关功能代码 */ } } } 在上述代码中，在调用selector.select()时，如果没有对应事件发生，线程应该阻塞在这，但是实际情况并不会，线程继续执行，selector.select()返回numKeys是0，所以下面本应该对key值进行遍历的事件处理根本执行不了，又回到最上面的while(true)循环，循环往复，不断的轮询，直到linux系统出现100%的CPU情况，其它执行任务干不了活，最终导致程序崩溃。有意思的是，这个bug的产生原因到现在还在不断甩锅中，linux方面说是jdk的问题，jdk方面说是linux的epoll的问题。"><meta itemprop="datePublished" content="2021-06-10T10:24:48+08:00" />
 <meta itemprop="dateModified" content="2021-06-10T10:24:48+08:00" />
-<meta itemprop="wordCount" content="308">
+<meta itemprop="wordCount" content="306">
 <meta itemprop="keywords" content="" />
 <meta name="twitter:card" content="summary"/>
 <meta name="twitter:title" content="多路复用IO的底层实现及空轮询bug"/>
@@ -101,27 +77,15 @@ selector：选择器是实现异步回调的关键，作用是检测各个通道
 底层实现 IO多路复用，从表面上可以简单理解为一种机制，一个进程可以监控多个文件描述符，一旦有某个描述符就绪，就能通知进程进行相应的读写操作。从宏观上，如果系统要对外提供一个进程可以监控多个连接方法的话，那么实现过程中需要考虑的问题有以下几条：
 系统如何知道进程需要监控哪些连接和事件（fd）； 系统要使用什么方法对这些fd的状态进行监控； 系统监控到活跃事件之后，如何通知进程。 linux操作系统中，select、poll和epoll三种系统调用都可以解决以上三个问题，进而实现IO的多路复用。
 select select监控连接的流程如下：
-再调用select之前，系统需要知道需要监控哪些fd可读、可写、异常状态，这些事件分别存放在三个fd_set的数组中；
-调用select时，系统要把fd_set从用户空间拷贝到内核空间（发生一次空间切换），内核空间拿到后，采用轮询的方式遍历fd_set数组，一个个扫描对应的事件是否准备就绪；
-扫描到有对应事件发生后，内核会将把那些没有发生的事件的句柄清除，然后将fd_set发送给应用进程（又发生一次空间切换）。
-引用进程拿到这个返回的fd_set之后，就知道哪些已经是准备就绪的事件了，对对应的事件发起数据读取或者写入的操作。（这里借用知乎勤劳大佬的图片）
-缺点：
-每调用一下select，就要把三个fd_set数组从用户空间拷贝到内核空间，返回的时候还要再拷贝回来，当数组数据量很大的时候，消耗会很大；
-内核需要将fd_set数组逐个遍历，检查哪些事件是准备就绪的，很耗时；
-fd_set数组有长度限制，32位系统是1024，64位系统是2048，也就是说select最多监控1024个连接。
-poll poll主要就是再select的基础上作了两点改进：
+再调用select之前，系统需要知道需要监控哪些fd可读、可写、异常状态，这些事件分别存放在三个fd_set的数组中； 调用select时，系统要把fd_set从用户空间拷贝到内核空间（发生一次空间切换），内核空间拿到后，采用轮询的方式遍历fd_set数组，一个个扫描对应的事件是否准备就绪； 扫描到有对应事件发生后，内核会将把那些没有发生的事件的句柄清除，然后将fd_set发送给应用进程（又发生一次空间切换）。 引用进程拿到这个返回的fd_set之后，就知道哪些已经是准备就绪的事件了，对对应的事件发起数据读取或者写入的操作。 缺点：
+每调用一下select，就要把三个fd_set数组从用户空间拷贝到内核空间，返回的时候还要再拷贝回来，当数组数据量很大的时候，消耗会很大； 内核需要将fd_set数组逐个遍历，检查哪些事件是准备就绪的，很耗时； fd_set数组有长度限制，32位系统是1024，64位系统是2048，也就是说select最多监控1024个连接。 poll poll主要就是再select的基础上作了两点改进：
 事件集合不在使用数组，而是使用链表，没有了长度限制；
 保存在链表里的，需要监控的fd信息采用了poll_fd的文件格式，select每一次调用都要重新注册感兴趣的事件和连接，poll不需要，pollfd保存了需要监控的事件集合，同时也保存了一个返回激活事件的fd事件集合。重新发送请求时不需要再次设置感兴趣的事件。
 epoll epoll目前是实现多路复用IO的主流系统调用，epoll采用一组方法调用来对事件进行监控。大致流程如下：
-1、epoll_create方法，向内核申请一个fd文件描述符作为内核事件监听表（B&#43;树结构），这个描述符用来保存应用进程需要监控哪些fd和对应进程的事件；
-2、epoll_ctl方法，向事件监听表添加或者移除对应的fd和事件类型；
-3、epoll_wait方法，给需要监控的fd绑定回调事件，内核向事件表的fd绑定一个回调函数callback；
-当监控的fd活跃时，会调用callback函数把事件加入到一个活跃事件队列里面；
-epoll_wait返回的时候，会将活跃时间队列里面的fd和事件类型返回给应用进程。
-总的来说，epoll事先就在内核空间创建了一个事件监听表，后续操作只要向表内注册和删除感兴趣事件就行，因为本来就在内核空间，避免了两个空间的来回复制；并且给每个感兴趣的fd绑定了一个回调函数，当事件激活后会主动调用回调函数，将fd加入到活跃事件队列，避免了遍历操作。
+epoll_create方法，向内核申请一个fd文件描述符作为内核事件监听表（B&#43;树结构），这个描述符用来保存应用进程需要监控哪些fd和对应进程的事件； epoll_ctl方法，向事件监听表添加或者移除对应的fd和事件类型； epoll_wait方法，给需要监控的fd绑定回调事件，内核向事件表的fd绑定一个回调函数callback；当监控的fd活跃时，会调用callback函数把事件加入到一个活跃事件队列里面；epoll_wait返回的时候，会将活跃时间队列里面的fd和事件类型返回给应用进程。 总的来说，epoll事先就在内核空间创建了一个事件监听表，后续操作只要向表内注册和删除感兴趣事件就行，因为本来就在内核空间，避免了两个空间的来回复制；并且给每个感兴趣的fd绑定了一个回调函数，当事件激活后会主动调用回调函数，将fd加入到活跃事件队列，避免了遍历操作。
 jdk的epoll空轮询bug 使用IO复用，Linux下一般默认就是epoll，Java NIO在Linux下默认也是epoll机制，但是JDK中epoll的实现却是有漏洞的，其中最有名的java nio epoll bug就是即使是关注的select轮询事件返回数量为0，NIO照样不断的从select本应该阻塞的Selector.select()/Selector.select(timeout)中wake up出来，导致CPU 100%问题。
 空轮询的伪代码：
-// 轮询处理 while (true) { if (socket.isOpen()) { //在注册的键中选择已准备就绪的事件（这里可能会出现空轮询bug） selector.select(); //已选择键集 Set&lt;SelectionKey&gt; keys = selector.selectedKeys(); Iterator&lt;SelectionKey&gt; iterator = keys.iterator(); //处理准备就绪的事件 while (iterator.hasNext()) { /** 相关功能代码 */ } } } 在上述代码中，在调用selector."/>
+// 轮询处理 while (true) { if (socket.isOpen()) { //在注册的键中选择已准备就绪的事件（这里可能会出现空轮询bug） selector.select(); //已选择键集 Set&lt;SelectionKey&gt; keys = selector.selectedKeys(); Iterator&lt;SelectionKey&gt; iterator = keys.iterator(); //处理准备就绪的事件 while (iterator.hasNext()) { /** 相关功能代码 */ } } } 在上述代码中，在调用selector.select()时，如果没有对应事件发生，线程应该阻塞在这，但是实际情况并不会，线程继续执行，selector.select()返回numKeys是0，所以下面本应该对key值进行遍历的事件处理根本执行不了，又回到最上面的while(true)循环，循环往复，不断的轮询，直到linux系统出现100%的CPU情况，其它执行任务干不了活，最终导致程序崩溃。有意思的是，这个bug的产生原因到现在还在不断甩锅中，linux方面说是jdk的问题，jdk方面说是linux的epoll的问题。"/>
 <meta name="twitter:site" content="@https://www.twitter.com/"/>
 
 
@@ -168,55 +132,35 @@ jdk的epoll空轮询bug 使用IO复用，Linux下一般默认就是epoll，Java 
 <p>linux操作系统中，select、poll和epoll三种系统调用都可以解决以上三个问题，进而实现IO的多路复用。</p>
 <h2 id="select">select</h2>
 <p>select监控连接的流程如下：</p>
-<ol>
-<li>
-<p>再调用select之前，系统需要知道需要监控哪些fd可读、可写、异常状态，这些事件分别存放在三个fd_set的数组中；</p>
-</li>
-<li>
-<p>调用select时，系统要把fd_set从用户空间拷贝到内核空间（发生一次空间切换），内核空间拿到后，采用轮询的方式遍历fd_set数组，一个个扫描对应的事件是否准备就绪；</p>
-</li>
-<li>
-<p>扫描到有对应事件发生后，内核会将把那些没有发生的事件的句柄清除，然后将fd_set发送给应用进程（又发生一次空间切换）。</p>
-</li>
-<li>
-<p>引用进程拿到这个返回的fd_set之后，就知道哪些已经是准备就绪的事件了，对对应的事件发起数据读取或者写入的操作。（这里借用知乎勤劳大佬的图片）</p>
-</li>
-</ol>
-<!-- raw HTML omitted -->
+<ul>
+<li>再调用select之前，系统需要知道需要监控哪些fd可读、可写、异常状态，这些事件分别存放在三个fd_set的数组中；</li>
+<li>调用select时，系统要把fd_set从用户空间拷贝到内核空间（发生一次空间切换），内核空间拿到后，采用轮询的方式遍历fd_set数组，一个个扫描对应的事件是否准备就绪；</li>
+<li>扫描到有对应事件发生后，内核会将把那些没有发生的事件的句柄清除，然后将fd_set发送给应用进程（又发生一次空间切换）。</li>
+<li>引用进程拿到这个返回的fd_set之后，就知道哪些已经是准备就绪的事件了，对对应的事件发起数据读取或者写入的操作。</li>
+</ul>
 <p>缺点：</p>
-<ol>
-<li>
-<p>每调用一下select，就要把三个fd_set数组从用户空间拷贝到内核空间，返回的时候还要再拷贝回来，当数组数据量很大的时候，消耗会很大；</p>
-</li>
-<li>
-<p>内核需要将fd_set数组逐个遍历，检查哪些事件是准备就绪的，很耗时；</p>
-</li>
-<li>
-<p>fd_set数组有长度限制，32位系统是1024，64位系统是2048，也就是说select最多监控1024个连接。</p>
-</li>
-</ol>
+<ul>
+<li>每调用一下select，就要把三个fd_set数组从用户空间拷贝到内核空间，返回的时候还要再拷贝回来，当数组数据量很大的时候，消耗会很大；</li>
+<li>内核需要将fd_set数组逐个遍历，检查哪些事件是准备就绪的，很耗时；</li>
+<li>fd_set数组有长度限制，32位系统是1024，64位系统是2048，也就是说select最多监控1024个连接。</li>
+</ul>
 <h2 id="poll">poll</h2>
 <p>poll主要就是再select的基础上作了两点改进：</p>
-<ol>
+<ul>
 <li>
 <p>事件集合不在使用数组，而是使用链表，没有了长度限制；</p>
 </li>
 <li>
 <p>保存在链表里的，需要监控的fd信息采用了poll_fd的文件格式，select每一次调用都要重新注册感兴趣的事件和连接，poll不需要，pollfd保存了需要监控的事件集合，同时也保存了一个返回激活事件的fd事件集合。重新发送请求时不需要再次设置感兴趣的事件。</p>
 </li>
-</ol>
+</ul>
 <h2 id="epoll">epoll</h2>
 <p>epoll目前是实现多路复用IO的主流系统调用，epoll采用一组方法调用来对事件进行监控。大致流程如下：</p>
-<p>1、<strong>epoll_create</strong>方法，向内核申请一个fd文件描述符作为内核事件监听表（B+树结构），这个描述符用来保存应用进程需要监控哪些fd和对应进程的事件；</p>
-<!-- raw HTML omitted -->
-<p>2、<strong>epoll_ctl</strong>方法，向事件监听表添加或者移除对应的fd和事件类型；</p>
-<!-- raw HTML omitted -->
-<p>3、<strong>epoll_wait</strong>方法，给需要监控的fd绑定回调事件，内核向事件表的fd绑定一个回调函数callback；</p>
-<!-- raw HTML omitted -->
-<p>当监控的fd活跃时，会调用callback函数把事件加入到一个活跃事件队列里面；</p>
-<!-- raw HTML omitted -->
-<p>epoll_wait返回的时候，会将活跃时间队列里面的fd和事件类型返回给应用进程。</p>
-<!-- raw HTML omitted -->
+<ul>
+<li><strong>epoll_create</strong>方法，向内核申请一个fd文件描述符作为内核事件监听表（B+树结构），这个描述符用来保存应用进程需要监控哪些fd和对应进程的事件；</li>
+<li><strong>epoll_ctl</strong>方法，向事件监听表添加或者移除对应的fd和事件类型；</li>
+<li><strong>epoll_wait</strong>方法，给需要监控的fd绑定回调事件，内核向事件表的fd绑定一个回调函数callback；当监控的fd活跃时，会调用callback函数把事件加入到一个活跃事件队列里面；epoll_wait返回的时候，会将活跃时间队列里面的fd和事件类型返回给应用进程。</li>
+</ul>
 <p>总的来说，epoll事先就在内核空间创建了一个事件监听表，后续操作只要向表内注册和删除感兴趣事件就行，因为本来就在内核空间，避免了两个空间的来回复制；并且给每个感兴趣的fd绑定了一个回调函数，当事件激活后会主动调用回调函数，将fd加入到活跃事件队列，避免了遍历操作。</p>
 <h2 id="jdk的epoll空轮询bug">jdk的epoll空轮询bug</h2>
 <p>使用IO复用，Linux下一般默认就是epoll，Java NIO在Linux下默认也是epoll机制，但是JDK中epoll的实现却是有漏洞的，其中最有名的java nio epoll bug就是即使是关注的select轮询事件返回数量为0，NIO照样不断的从select本应该阻塞的Selector.select()/Selector.select(timeout)中wake up出来，导致CPU 100%问题。</p>
