@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en-us">
+	<head>
+    <meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="author" content="ZhuoY Li">
+<meta name="description" content="It&#39;s never too late to learn.">
+<meta name="generator" content="Hugo 0.101.0" />
+<title>Redis实现分布式锁与其他实现方案</title>
+<link rel="shortcut icon" href="https://lzy175.github.io/images/favicon.ico">
+<link rel="stylesheet" href="https://lzy175.github.io/css/style.css">
+<link rel="stylesheet" href="https://lzy175.github.io/css/highlight.css">
+
+
+
+<link rel="stylesheet" href="https://lzy175.github.io/css/monosocialiconsfont.css">
+
+
+
+<link href="https://lzy175.github.io/index.xml" rel="alternate" type="application/rss+xml" title="Hugo Cactus Theme" />
+
+
+<meta property="og:title" content="Redis实现分布式锁与其他实现方案" />
+<meta property="og:description" content="分布式系统确实能带来性能和效率上的提升，目前单机的局限越来越大，大多数互联网系统都是分布式部署的，但为此，我们就需要多解决一个分布式环境下，数据一致性的问题，这里有个很重要的CAP理论。
+CAP理论是在设计分布式系统的过程中，处理数据一致性问题时必须考虑的理论，而CAP理论说的就是：一个分布式系统，不可能同时做到这三点C、A、P。
+CAP即：
+Consistency（一致性） Availability（可用性） Partition tolerance（分区容忍性） 翻译一下就是： ①**一致性：**对于客户端的每次读操作，要么读到的是最新的数据，要么读取失败。换句话说，一致性是站在分布式系统的角度，对访问本系统的客户端的一种承诺：要么我给您返回一个错误，要么我给你返回绝对一致的最新数据，不难看出，其强调的是数据正确。
+②**可用性：**任何客户端的请求都能得到响应数据，不会出现响应错误。换句话说，可用性是站在分布式系统的角度，对访问本系统的客户的另一种承诺：我一定会给您返回数据，不会给你返回错误，但不保证数据最新，强调的是不出错。
+③**分区容忍性：**由于分布式系统通过网络进行通信，网络是不可靠的。当任意数量的消息丢失或延迟到达时，系统仍会继续提供服务，不会挂掉。换句话说，分区容忍性是站在分布式系统的角度，对访问本系统的客户端的再一种承诺：我会一直运行，不管我的内部出现何种数据同步问题，强调的是不挂掉。
+谈回分布式，当某个资源在多系统之间，具有共享性的时候，为了保证大家访问这个资源数据是一致的，那么就必须要求在同一时刻只能被一个客户端处理，不能并发的执行，否者就会出现同一时刻有人写有人读，大家访问到的数据就不一致了。
+在单机时代，虽然不需要分布式锁，但也面临过类似的问题，只不过在单机的情况下，如果有多个线程要同时访问某个共享资源的时候，我们可以采用线程间加锁的机制，即当某个线程获取到这个资源后，就立即对这个资源进行加锁，当使用完资源之后，再解锁，其它线程就可以接着使用了。例如，在JAVA中，甚至专门提供了一些处理锁机制的一些API（synchronize/Lock等）。
+但是到了分布式系统的时代，这种线程之间的锁机制，就没作用了，系统可能会有多份并且部署在不同的机器上，这些资源已经不是在线程之间共享了，而是属于进程之间共享的资源。
+因此，为了解决这个问题，就必须引入「分布式锁」。
+分布式锁，是指在分布式的部署环境下，通过锁机制来让多客户端互斥的对共享资源进行访问。
+分布式锁要要求：
+排他性：在同一时间只会有一个客户端能获取到锁，其它客户端无法同时获取； 避免死锁：这把锁在一段有限的时间之后，一定会被释放（正常释放或异常释放）； 高可用：获取或释放锁的机制必须高可用且性能佳。 目前主流的有三种，从实现的复杂度上来看，从上往下难度依次增加：
+基于数据库实现 基于Redis实现 基于ZooKeeper实现 接下来着重介绍下基于redis的分布式锁实现：
+使用SETNX实现
+SETNX的使用方式为：SETNX key value，只在键key不存在的情况下，将键key的值设置为value，若键key存在，则SETNX不做任何动作。
+boolean result = jedis.setnx(&#34;lock-key&#34;,true)== 1L; if (result) { try { // do something } finally { jedis.del(&#34;lock-key&#34;); } } 这种方案有一个致命问题，就是某个线程在获取锁之后由于某些异常因素（比如宕机）而不能正常的执行解锁操作，那么这个锁就永远释放不掉了。
+为此，我们可以为这个锁加上一个超时时间
+执行 SET key value EX seconds 的效果等同于执行 SETEX key seconds value
+执行 SET key value PX milliseconds 的效果等同于执行 PSETEX key milliseconds value" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://lzy175.github.io/posts/redis%E5%AE%9E%E7%8E%B0%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81%E4%B8%8E%E5%85%B6%E4%BB%96%E5%AE%9E%E7%8E%B0%E6%96%B9%E6%A1%88/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2021-08-25T17:24:33+08:00" />
+<meta property="article:modified_time" content="2021-08-25T17:24:33+08:00" />
+
+
+
+<meta itemprop="name" content="Redis实现分布式锁与其他实现方案">
+<meta itemprop="description" content="分布式系统确实能带来性能和效率上的提升，目前单机的局限越来越大，大多数互联网系统都是分布式部署的，但为此，我们就需要多解决一个分布式环境下，数据一致性的问题，这里有个很重要的CAP理论。
+CAP理论是在设计分布式系统的过程中，处理数据一致性问题时必须考虑的理论，而CAP理论说的就是：一个分布式系统，不可能同时做到这三点C、A、P。
+CAP即：
+Consistency（一致性） Availability（可用性） Partition tolerance（分区容忍性） 翻译一下就是： ①**一致性：**对于客户端的每次读操作，要么读到的是最新的数据，要么读取失败。换句话说，一致性是站在分布式系统的角度，对访问本系统的客户端的一种承诺：要么我给您返回一个错误，要么我给你返回绝对一致的最新数据，不难看出，其强调的是数据正确。
+②**可用性：**任何客户端的请求都能得到响应数据，不会出现响应错误。换句话说，可用性是站在分布式系统的角度，对访问本系统的客户的另一种承诺：我一定会给您返回数据，不会给你返回错误，但不保证数据最新，强调的是不出错。
+③**分区容忍性：**由于分布式系统通过网络进行通信，网络是不可靠的。当任意数量的消息丢失或延迟到达时，系统仍会继续提供服务，不会挂掉。换句话说，分区容忍性是站在分布式系统的角度，对访问本系统的客户端的再一种承诺：我会一直运行，不管我的内部出现何种数据同步问题，强调的是不挂掉。
+谈回分布式，当某个资源在多系统之间，具有共享性的时候，为了保证大家访问这个资源数据是一致的，那么就必须要求在同一时刻只能被一个客户端处理，不能并发的执行，否者就会出现同一时刻有人写有人读，大家访问到的数据就不一致了。
+在单机时代，虽然不需要分布式锁，但也面临过类似的问题，只不过在单机的情况下，如果有多个线程要同时访问某个共享资源的时候，我们可以采用线程间加锁的机制，即当某个线程获取到这个资源后，就立即对这个资源进行加锁，当使用完资源之后，再解锁，其它线程就可以接着使用了。例如，在JAVA中，甚至专门提供了一些处理锁机制的一些API（synchronize/Lock等）。
+但是到了分布式系统的时代，这种线程之间的锁机制，就没作用了，系统可能会有多份并且部署在不同的机器上，这些资源已经不是在线程之间共享了，而是属于进程之间共享的资源。
+因此，为了解决这个问题，就必须引入「分布式锁」。
+分布式锁，是指在分布式的部署环境下，通过锁机制来让多客户端互斥的对共享资源进行访问。
+分布式锁要要求：
+排他性：在同一时间只会有一个客户端能获取到锁，其它客户端无法同时获取； 避免死锁：这把锁在一段有限的时间之后，一定会被释放（正常释放或异常释放）； 高可用：获取或释放锁的机制必须高可用且性能佳。 目前主流的有三种，从实现的复杂度上来看，从上往下难度依次增加：
+基于数据库实现 基于Redis实现 基于ZooKeeper实现 接下来着重介绍下基于redis的分布式锁实现：
+使用SETNX实现
+SETNX的使用方式为：SETNX key value，只在键key不存在的情况下，将键key的值设置为value，若键key存在，则SETNX不做任何动作。
+boolean result = jedis.setnx(&#34;lock-key&#34;,true)== 1L; if (result) { try { // do something } finally { jedis.del(&#34;lock-key&#34;); } } 这种方案有一个致命问题，就是某个线程在获取锁之后由于某些异常因素（比如宕机）而不能正常的执行解锁操作，那么这个锁就永远释放不掉了。
+为此，我们可以为这个锁加上一个超时时间
+执行 SET key value EX seconds 的效果等同于执行 SETEX key seconds value
+执行 SET key value PX milliseconds 的效果等同于执行 PSETEX key milliseconds value"><meta itemprop="datePublished" content="2021-08-25T17:24:33+08:00" />
+<meta itemprop="dateModified" content="2021-08-25T17:24:33+08:00" />
+<meta itemprop="wordCount" content="301">
+<meta itemprop="keywords" content="" />
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Redis实现分布式锁与其他实现方案"/>
+<meta name="twitter:description" content="分布式系统确实能带来性能和效率上的提升，目前单机的局限越来越大，大多数互联网系统都是分布式部署的，但为此，我们就需要多解决一个分布式环境下，数据一致性的问题，这里有个很重要的CAP理论。
+CAP理论是在设计分布式系统的过程中，处理数据一致性问题时必须考虑的理论，而CAP理论说的就是：一个分布式系统，不可能同时做到这三点C、A、P。
+CAP即：
+Consistency（一致性） Availability（可用性） Partition tolerance（分区容忍性） 翻译一下就是： ①**一致性：**对于客户端的每次读操作，要么读到的是最新的数据，要么读取失败。换句话说，一致性是站在分布式系统的角度，对访问本系统的客户端的一种承诺：要么我给您返回一个错误，要么我给你返回绝对一致的最新数据，不难看出，其强调的是数据正确。
+②**可用性：**任何客户端的请求都能得到响应数据，不会出现响应错误。换句话说，可用性是站在分布式系统的角度，对访问本系统的客户的另一种承诺：我一定会给您返回数据，不会给你返回错误，但不保证数据最新，强调的是不出错。
+③**分区容忍性：**由于分布式系统通过网络进行通信，网络是不可靠的。当任意数量的消息丢失或延迟到达时，系统仍会继续提供服务，不会挂掉。换句话说，分区容忍性是站在分布式系统的角度，对访问本系统的客户端的再一种承诺：我会一直运行，不管我的内部出现何种数据同步问题，强调的是不挂掉。
+谈回分布式，当某个资源在多系统之间，具有共享性的时候，为了保证大家访问这个资源数据是一致的，那么就必须要求在同一时刻只能被一个客户端处理，不能并发的执行，否者就会出现同一时刻有人写有人读，大家访问到的数据就不一致了。
+在单机时代，虽然不需要分布式锁，但也面临过类似的问题，只不过在单机的情况下，如果有多个线程要同时访问某个共享资源的时候，我们可以采用线程间加锁的机制，即当某个线程获取到这个资源后，就立即对这个资源进行加锁，当使用完资源之后，再解锁，其它线程就可以接着使用了。例如，在JAVA中，甚至专门提供了一些处理锁机制的一些API（synchronize/Lock等）。
+但是到了分布式系统的时代，这种线程之间的锁机制，就没作用了，系统可能会有多份并且部署在不同的机器上，这些资源已经不是在线程之间共享了，而是属于进程之间共享的资源。
+因此，为了解决这个问题，就必须引入「分布式锁」。
+分布式锁，是指在分布式的部署环境下，通过锁机制来让多客户端互斥的对共享资源进行访问。
+分布式锁要要求：
+排他性：在同一时间只会有一个客户端能获取到锁，其它客户端无法同时获取； 避免死锁：这把锁在一段有限的时间之后，一定会被释放（正常释放或异常释放）； 高可用：获取或释放锁的机制必须高可用且性能佳。 目前主流的有三种，从实现的复杂度上来看，从上往下难度依次增加：
+基于数据库实现 基于Redis实现 基于ZooKeeper实现 接下来着重介绍下基于redis的分布式锁实现：
+使用SETNX实现
+SETNX的使用方式为：SETNX key value，只在键key不存在的情况下，将键key的值设置为value，若键key存在，则SETNX不做任何动作。
+boolean result = jedis.setnx(&#34;lock-key&#34;,true)== 1L; if (result) { try { // do something } finally { jedis.del(&#34;lock-key&#34;); } } 这种方案有一个致命问题，就是某个线程在获取锁之后由于某些异常因素（比如宕机）而不能正常的执行解锁操作，那么这个锁就永远释放不掉了。
+为此，我们可以为这个锁加上一个超时时间
+执行 SET key value EX seconds 的效果等同于执行 SETEX key seconds value
+执行 SET key value PX milliseconds 的效果等同于执行 PSETEX key milliseconds value"/>
+<meta name="twitter:site" content="@https://www.twitter.com/"/>
+
+
+    </head>
+<body>
+    <nav class="main-nav">
+	
+		<a href='https://lzy175.github.io/'> <span class="arrow">←</span>Home</a>
+	
+
+	
+
+	
+		<a class="cta" href="https://lzy175.github.io/index.xml">Subscribe</a>
+	
+</nav>
+
+    <section id="wrapper">
+        
+        
+<article class="post">
+    <header>
+        <h1>Redis实现分布式锁与其他实现方案</h1>
+        <h2 class="subtitle"></h2>
+        <h2 class="headline">
+        August 25, 2021
+        <br>
+        
+        </h2>
+    </header>
+    <section id="post-body">
+        <p>分布式系统确实能带来性能和效率上的提升，目前单机的局限越来越大，大多数互联网系统都是分布式部署的，但为此，我们就需要多解决一个分布式环境下，数据一致性的问题，这里有个很重要的CAP理论。</p>
+<p>CAP理论是在设计分布式系统的过程中，处理数据一致性问题时必须考虑的理论，而CAP理论说的就是：一个分布式系统，不可能同时做到这三点C、A、P。</p>
+<p>CAP即：</p>
+<ul>
+<li>Consistency（一致性）</li>
+<li>Availability（可用性）</li>
+<li>Partition tolerance（分区容忍性）</li>
+</ul>
+<p>翻译一下就是：
+①**一致性：**对于客户端的每次读操作，要么读到的是最新的数据，要么读取失败。换句话说，一致性是站在分布式系统的角度，对访问本系统的客户端的一种承诺：要么我给您返回一个错误，要么我给你返回绝对一致的最新数据，不难看出，其强调的是数据正确。</p>
+<p>②**可用性：**任何客户端的请求都能得到响应数据，不会出现响应错误。换句话说，可用性是站在分布式系统的角度，对访问本系统的客户的另一种承诺：我一定会给您返回数据，不会给你返回错误，但不保证数据最新，强调的是不出错。</p>
+<p>③**分区容忍性：**由于分布式系统通过网络进行通信，网络是不可靠的。当任意数量的消息丢失或延迟到达时，系统仍会继续提供服务，不会挂掉。换句话说，分区容忍性是站在分布式系统的角度，对访问本系统的客户端的再一种承诺：我会一直运行，不管我的内部出现何种数据同步问题，强调的是不挂掉。</p>
+<p>谈回分布式，当某个资源在多系统之间，具有共享性的时候，为了保证大家访问这个资源数据是一致的，那么就必须要求在同一时刻只能被一个客户端处理，不能并发的执行，否者就会出现同一时刻有人写有人读，大家访问到的数据就不一致了。</p>
+<p>在单机时代，虽然不需要分布式锁，但也面临过类似的问题，只不过在单机的情况下，如果有多个线程要同时访问某个共享资源的时候，我们可以采用线程间加锁的机制，即当某个线程获取到这个资源后，就立即对这个资源进行加锁，当使用完资源之后，再解锁，其它线程就可以接着使用了。例如，在JAVA中，甚至专门提供了一些处理锁机制的一些API（synchronize/Lock等）。</p>
+<p>但是到了分布式系统的时代，这种线程之间的锁机制，就没作用了，系统可能会有多份并且部署在不同的机器上，这些资源已经不是在线程之间共享了，而是属于进程之间共享的资源。</p>
+<p>因此，为了解决这个问题，就必须引入「分布式锁」。</p>
+<p>分布式锁，是指在分布式的部署环境下，通过锁机制来让多客户端互斥的对共享资源进行访问。</p>
+<p>分布式锁要要求：</p>
+<ul>
+<li>排他性：在同一时间只会有一个客户端能获取到锁，其它客户端无法同时获取；</li>
+<li>避免死锁：这把锁在一段有限的时间之后，一定会被释放（正常释放或异常释放）；</li>
+<li>高可用：获取或释放锁的机制必须高可用且性能佳。</li>
+</ul>
+<p>目前主流的有三种，从实现的复杂度上来看，从上往下难度依次增加：</p>
+<ul>
+<li>基于数据库实现</li>
+<li>基于<code>Redis</code>实现</li>
+<li>基于<code>ZooKeeper</code>实现</li>
+</ul>
+<p>接下来着重介绍下基于redis的分布式锁实现：</p>
+<p><strong>使用SETNX实现</strong></p>
+<p>SETNX的使用方式为：<code>SETNX key value</code>，只在键key不存在的情况下，将键key的值设置为value，若键key存在，则SETNX不做任何动作。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">boolean</span> result <span style="color:#f92672">=</span> jedis<span style="color:#f92672">.</span><span style="color:#a6e22e">setnx</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;lock-key&#34;</span><span style="color:#f92672">,</span><span style="color:#66d9ef">true</span><span style="color:#f92672">)==</span> 1L<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">if</span>  <span style="color:#f92672">(</span>result<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">try</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// do something
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#f92672">}</span> <span style="color:#66d9ef">finally</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>        jedis<span style="color:#f92672">.</span><span style="color:#a6e22e">del</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;lock-key&#34;</span><span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span> <span style="color:#f92672">}</span>
+</span></span></code></pre></div><p>这种方案有一个致命问题，就是某个线程在获取锁之后由于某些异常因素（比如宕机）而不能正常的执行解锁操作，那么这个锁就永远释放不掉了。</p>
+<p>为此，我们可以为这个锁加上一个超时时间</p>
+<p>执行 <code>SET key value EX seconds</code> 的效果等同于执行 <code>SETEX key seconds value</code></p>
+<p>执行 <code>SET key value PX milliseconds</code> 的效果等同于执行 <code>PSETEX key milliseconds value</code></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>String result <span style="color:#f92672">=</span> jedis<span style="color:#f92672">.</span><span style="color:#a6e22e">setnx</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;lock-key&#34;</span><span style="color:#f92672">,</span><span style="color:#66d9ef">true</span><span style="color:#f92672">,</span> 5<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span><span style="color:#e6db74">&#34;OK&#34;</span><span style="color:#f92672">.</span><span style="color:#a6e22e">equals</span><span style="color:#f92672">(</span>result<span style="color:#f92672">))</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">try</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// do something
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#f92672">}</span> <span style="color:#66d9ef">finally</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>        jedis<span style="color:#f92672">.</span><span style="color:#a6e22e">del</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;lock-key&#34;</span><span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span></code></pre></div><p><strong>实际上还是会有问题</strong></p>
+<p>试想一下，某线程A获取了锁并且设置了过期时间为10s，然后在执行业务逻辑的时候耗费了15s，此时线程A获取的锁早已被Redis的过期机制自动释放了。</p>
+<p>在线程A获取锁并经过10s之后，改锁可能已经被其它线程获取到了。当线程A执行完业务逻辑准备解锁（<code>DEL key</code>）的时候，有可能删除掉的是其它线程已经获取到的锁。</p>
+<p>所以最好的方式是在解锁时判断锁是否是自己的，我们可以在设置<code>key</code>的时候将value设置为一个唯一值<code>uniqueValue</code>（可以是随机值、UUID、或者机器号+线程号的组合、签名等）。</p>
+<p>当解锁时，也就是删除key的时候先判断一下key对应的value是否等于先前设置的值，如果相等才能删除key。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>String velue<span style="color:#f92672">=</span> String<span style="color:#f92672">.</span><span style="color:#a6e22e">valueOf</span><span style="color:#f92672">(</span>System<span style="color:#f92672">.</span><span style="color:#a6e22e">currentTimeMillis</span><span style="color:#f92672">())</span>
+</span></span><span style="display:flex;"><span>String result <span style="color:#f92672">=</span> jedis<span style="color:#f92672">.</span><span style="color:#a6e22e">set</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;lock-key&#34;</span><span style="color:#f92672">,</span>velue<span style="color:#f92672">,</span> 5<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span><span style="color:#e6db74">&#34;OK&#34;</span><span style="color:#f92672">.</span><span style="color:#a6e22e">equals</span><span style="color:#f92672">(</span>result<span style="color:#f92672">))</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">try</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// do something
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#f92672">}</span> <span style="color:#66d9ef">finally</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>       <span style="color:#75715e">//非原子操作
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>       <span style="color:#66d9ef">if</span><span style="color:#f92672">(</span>jedis<span style="color:#f92672">.</span><span style="color:#a6e22e">get</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;lock-key&#34;</span><span style="color:#f92672">)==</span>value<span style="color:#f92672">){</span>
+</span></span><span style="display:flex;"><span>          jedis<span style="color:#f92672">.</span><span style="color:#a6e22e">del</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;lock-key&#34;</span><span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">}</span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span></code></pre></div><p>这里我们一眼就可以看出问题来：<code>GET</code>和<code>DEL</code>是两个分开的操作，在GET执行之后且在DEL执行之前的间隙是可能会发生异常的。</p>
+<p>如果我们只要保证解锁的代码是原子性的就能解决问题了</p>
+<p>这里我们引入了一种新的方式，就是<strong>Lua脚本</strong>，示例如下：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-lua" data-lang="lua"><span style="display:flex;"><span><span style="color:#66d9ef">if</span> redis.call(<span style="color:#e6db74">&#34;get&#34;</span>,KEYS[<span style="color:#ae81ff">1</span>]) <span style="color:#f92672">==</span> ARGV[<span style="color:#ae81ff">1</span>] <span style="color:#66d9ef">then</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> redis.call(<span style="color:#e6db74">&#34;del&#34;</span>,KEYS[<span style="color:#ae81ff">1</span>])
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">else</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> <span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">end</span>
+</span></span></code></pre></div><p>其中<code>ARGV[1]</code>表示设置key时指定的唯一值。</p>
+<p>由于Lua脚本的原子性，在Redis执行该脚本的过程中，其他客户端的命令都需要等待该Lua脚本执行完才能执行。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#f92672">import</span> lombok.extern.slf4j.Slf4j<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> org.springframework.beans.factory.annotation.Autowired<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> org.springframework.stereotype.Service<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> redis.clients.jedis.Jedis<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> redis.clients.jedis.JedisPool<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> java.util.Collections<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">/**
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> * @ClassName: RedisService
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> * @Description: Redis工具类
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> * @author: lzy
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> * @date: 2021/3/17 11:37
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> */</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">@Slf4j</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">@Service</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">RedisService</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">//redis连接池
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#a6e22e">@Autowired</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> JedisPool jedisPool<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">/**
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * 设置值
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     */</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">setValue</span><span style="color:#f92672">(</span>String key<span style="color:#f92672">,</span> Long value<span style="color:#f92672">){</span>
+</span></span><span style="display:flex;"><span>        Jedis jedisClient <span style="color:#f92672">=</span> jedisPool<span style="color:#f92672">.</span><span style="color:#a6e22e">getResource</span><span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>        jedisClient<span style="color:#f92672">.</span><span style="color:#a6e22e">set</span><span style="color:#f92672">(</span>key <span style="color:#f92672">,</span> value<span style="color:#f92672">.</span><span style="color:#a6e22e">toString</span><span style="color:#f92672">());</span>
+</span></span><span style="display:flex;"><span>        jedisClient<span style="color:#f92672">.</span><span style="color:#a6e22e">close</span><span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">/**
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * 获取值
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     */</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> String <span style="color:#a6e22e">getValue</span><span style="color:#f92672">(</span>String key<span style="color:#f92672">){</span>
+</span></span><span style="display:flex;"><span>        Jedis jedisClient <span style="color:#f92672">=</span> jedisPool<span style="color:#f92672">.</span><span style="color:#a6e22e">getResource</span><span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>        String value <span style="color:#f92672">=</span> jedisClient<span style="color:#f92672">.</span><span style="color:#a6e22e">get</span><span style="color:#f92672">(</span>key<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>        jedisClient<span style="color:#f92672">.</span><span style="color:#a6e22e">close</span><span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> value<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">/**
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * 获取分布式锁
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * @param lockKey
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * @param requestId
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * @param expireTime
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * @return
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     */</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">boolean</span> <span style="color:#a6e22e">tryDistributedLock</span><span style="color:#f92672">(</span>String lockKey<span style="color:#f92672">,</span> String requestId<span style="color:#f92672">,</span> <span style="color:#66d9ef">int</span> expireTime<span style="color:#f92672">){</span>
+</span></span><span style="display:flex;"><span>        Jedis jedisClient <span style="color:#f92672">=</span> jedisPool<span style="color:#f92672">.</span><span style="color:#a6e22e">getResource</span><span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>        String result <span style="color:#f92672">=</span>jedisClient<span style="color:#f92672">.</span><span style="color:#a6e22e">set</span><span style="color:#f92672">(</span>lockKey<span style="color:#f92672">,</span> requestId<span style="color:#f92672">,</span> <span style="color:#e6db74">&#34;NX&#34;</span><span style="color:#f92672">,</span> <span style="color:#e6db74">&#34;PX&#34;</span><span style="color:#f92672">,</span> expireTime<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>        jedisClient<span style="color:#f92672">.</span><span style="color:#a6e22e">close</span><span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;OK&#34;</span><span style="color:#f92672">.</span><span style="color:#a6e22e">equals</span><span style="color:#f92672">(</span>result<span style="color:#f92672">)){</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">true</span><span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">false</span><span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">boolean</span> <span style="color:#a6e22e">releaseDistributedLock</span><span style="color:#f92672">(</span>String lockKey<span style="color:#f92672">,</span> String requestId<span style="color:#f92672">){</span>
+</span></span><span style="display:flex;"><span>        Jedis jedisClient <span style="color:#f92672">=</span> jedisPool<span style="color:#f92672">.</span><span style="color:#a6e22e">getResource</span><span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">//lua操作，解锁的非原子性，首先要判断是否还持有锁，然后在解锁，其中ARGV[1]表示设置key时指定的唯一值。
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        String script <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;if redis.call(&#39;get&#39;, KEYS[1]) == ARGV[1] then return redis.call(&#39;del&#39;, KEYS[1]) else return 0 end&#34;</span><span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>        Long result <span style="color:#f92672">=</span> <span style="color:#f92672">(</span>Long<span style="color:#f92672">)</span> jedisClient<span style="color:#f92672">.</span><span style="color:#a6e22e">eval</span><span style="color:#f92672">(</span>script<span style="color:#f92672">,</span>Collections<span style="color:#f92672">.</span><span style="color:#a6e22e">singletonList</span><span style="color:#f92672">(</span>lockKey<span style="color:#f92672">),</span> Collections<span style="color:#f92672">.</span><span style="color:#a6e22e">singletonList</span><span style="color:#f92672">(</span>requestId<span style="color:#f92672">));</span>
+</span></span><span style="display:flex;"><span>        jedisClient<span style="color:#f92672">.</span><span style="color:#a6e22e">close</span><span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span><span style="color:#f92672">(</span>result <span style="color:#f92672">==</span> 1L<span style="color:#f92672">){</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">true</span><span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">false</span><span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span></code></pre></div>
+    </section>
+</article>
+
+<footer id="post-meta" class="clearfix">
+    <a href="https://twitter.com/Your%20Twitter%20account">
+    <img class="avatar" src="https://lzy175.github.io/images/avatar.png">
+    <div>
+        <span class="dark">ZhuoY Li</span>
+        <span>I&#39;m an blogger.</span>
+    </div>
+    </a>
+    <section id="sharing">
+        <a class="twitter" href="https://twitter.com/intent/tweet?text=https%3a%2f%2flzy175.github.io%2fposts%2fredis%25E5%25AE%259E%25E7%258E%25B0%25E5%2588%2586%25E5%25B8%2583%25E5%25BC%258F%25E9%2594%2581%25E4%25B8%258E%25E5%2585%25B6%25E4%25BB%2596%25E5%25AE%259E%25E7%258E%25B0%25E6%2596%25B9%25E6%25A1%2588%2f - Redis%e5%ae%9e%e7%8e%b0%e5%88%86%e5%b8%83%e5%bc%8f%e9%94%81%e4%b8%8e%e5%85%b6%e4%bb%96%e5%ae%9e%e7%8e%b0%e6%96%b9%e6%a1%88 by @Your%20Twitter%20account"><span class="icon-twitter"> tweet</span></a>
+
+<a class="facebook" href="#" onclick="
+    window.open(
+      'https://www.facebook.com/sharer/sharer.php?u='+encodeURIComponent(location.href),
+      'facebook-share-dialog',
+      'width=626,height=436');
+    return false;"><span class="icon-facebook-rect"> Share</span>
+</a>
+
+    </section>
+</footer>
+
+<div id="disqus_thread"></div>
+<script type="application/javascript">
+    window.disqus_config = function () {
+    
+    
+    
+    };
+    (function() {
+        if (["localhost", "127.0.0.1"].indexOf(window.location.hostname) != -1) {
+            document.getElementById('disqus_thread').innerHTML = 'Disqus comments not available by default when the website is previewed locally.';
+            return;
+        }
+        var d = document, s = d.createElement('script'); s.async = true;
+        s.src = '//' + "spf13" + '.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="https://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+<ul id="post-list" class="archive readmore">
+    <h3>Read more</h3>
+
+    
+    
+    
+        <li>
+            <a href="https://lzy175.github.io/posts/%E6%9C%89%E5%85%B3%E5%8D%95%E4%BE%8B%E6%A8%A1%E5%BC%8F%E5%92%8C%E4%BB%A3%E7%90%86%E6%A8%A1%E5%BC%8F%E7%9A%84%E5%AD%A6%E4%B9%A0/">有关单例模式和代理模式的学习<aside class="dates">Mar 18 2022</aside></a>
+        </li>
+    
+        <li>
+            <a href="https://lzy175.github.io/posts/jdbc%E5%AF%B9%E5%8F%8C%E4%BA%B2%E5%A7%94%E6%B4%BE%E6%A8%A1%E5%9E%8B%E7%9A%84%E7%A0%B4%E5%9D%8F%E5%88%86%E6%9E%90/">JDBC对双亲委派模型的破坏分析<aside class="dates">Mar 15 2022</aside></a>
+        </li>
+    
+        <li>
+            <a href="https://lzy175.github.io/posts/spring%E4%B8%ADbean%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F%E6%BA%90%E7%A0%81%E7%9A%84%E4%BA%86%E8%A7%A3/">Spring中bean生命周期源码的了解<aside class="dates">Jan 15 2022</aside></a>
+        </li>
+    
+        <li>
+            <a href="https://lzy175.github.io/posts/aqs%E6%BA%90%E7%A0%81%E5%88%9D%E6%8E%A2/">AQS源码初探<aside class="dates">Sep 12 2021</aside></a>
+        </li>
+    
+        <li>
+            <a href="https://lzy175.github.io/posts/%E5%AF%B9%E4%BA%8Eredis%E5%AE%9E%E9%99%85%E6%93%8D%E4%BD%9C%E7%9A%84%E5%AD%A6%E4%B9%A0/">对于redis实际操作的学习<aside class="dates">Jul 29 2021</aside></a>
+        </li>
+    
+        <li>
+            <a href="https://lzy175.github.io/posts/%E5%A4%9A%E8%B7%AF%E5%A4%8D%E7%94%A8io%E7%9A%84%E5%BA%95%E5%B1%82%E5%AE%9E%E7%8E%B0%E5%8F%8A%E7%A9%BA%E8%BD%AE%E8%AF%A2bug/">多路复用IO的底层实现及空轮询bug<aside class="dates">Jun 10 2021</aside></a>
+        </li>
+    
+        <li>
+            <a href="https://lzy175.github.io/posts/netty/">IO与Netty实操问题<aside class="dates">Jan 1 0001</aside></a>
+        </li>
+    
+        <li>
+            <a href="https://lzy175.github.io/posts/%E4%B8%89%E7%A7%8D%E6%97%B6%E9%97%B4%E5%A4%8D%E6%9D%82%E5%BA%A6%E4%B8%BAlogn%E7%9A%84%E6%8E%92%E5%BA%8F%E7%AE%97%E6%B3%95/">三种时间复杂度为logn的排序算法<aside class="dates">Jan 1 0001</aside></a>
+        </li>
+    
+        <li>
+            <a href="https://lzy175.github.io/posts/%E5%AF%B9%E4%BA%8Erpc%E6%A1%86%E6%9E%B6%E7%9A%84%E5%88%9D%E6%AD%A5%E7%90%86%E8%A7%A3/">对于RPC框架的初步理解<aside class="dates">Jan 1 0001</aside></a>
+        </li>
+    
+</ul>
+
+
+
+        <footer id="footer">
+    
+        <div id="social">
+
+	
+	
+    
+    <a class="symbol" href="https://www.dribbble.com/">
+        circledribble
+    </a>
+    
+    <a class="symbol" href="https://www.facebook.com/">
+        circlefacebook
+    </a>
+    
+    <a class="symbol" href="https://www.github.com/">
+        circlegithub
+    </a>
+    
+    <a class="symbol" href="https://www.twitter.com/">
+        circletwitterbird
+    </a>
+    
+
+
+</div>
+
+    
+    <p class="small">
+    
+        © Copyright 2022 ZhuoY Li
+    
+    </p>
+</footer>
+
+    </section>
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+<script src="https://lzy175.github.io/js/main.js"></script>
+<script src="https://lzy175.github.io/js/highlight.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+
+
+</body>
+</html>

@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en-us">
+	<head>
+    <meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="author" content="ZhuoY Li">
+<meta name="description" content="It&#39;s never too late to learn.">
+<meta name="generator" content="Hugo 0.101.0" />
+<title>JDBC对双亲委派模型的破坏分析</title>
+<link rel="shortcut icon" href="https://lzy175.github.io/images/favicon.ico">
+<link rel="stylesheet" href="https://lzy175.github.io/css/style.css">
+<link rel="stylesheet" href="https://lzy175.github.io/css/highlight.css">
+
+
+
+<link rel="stylesheet" href="https://lzy175.github.io/css/monosocialiconsfont.css">
+
+
+
+<link href="https://lzy175.github.io/index.xml" rel="alternate" type="application/rss+xml" title="Hugo Cactus Theme" />
+
+
+<meta property="og:title" content="JDBC对双亲委派模型的破坏分析" />
+<meta property="og:description" content="类加载器 通过类的全限定名获取类的二进制文件流。是对类进行解析的重要工具。
+类加载器有三种，依次是启动类加载器（bootstrapClassLoader），扩展类加载器，和应用程序类加载器（AppclassLoader).
+启动类加载器负责加载java的核心类库，比如rt.jar这种；
+扩展类加载器，一般是在扩展目录下加载类库，\lib\ext目录或者java.ext.dirs系统变量指定的路径中的所有目录；
+应用程序类加载器负责加载环境变量classPath或者java.class.path指定路径下的类库。是应用程序中默认的类加载器。
+双亲委派的具体内容就是：
+一个类加载器在加载某一个类的时候，首先委派给他的父类加载器去加载，依次递归，所以所有的加载请求其实都会汇聚到启动类加载器里面，如果父类加载器可以完成这个类的加载，那么就成功返回，如果加载不了，再由子类加载器进行加载。
+代码角度分析类加载的过程如下：
+public Class&lt;?&gt; loadClass(String name) throws ClassNotFoundException { return loadClass(name, false); } protected synchronized Class&lt;?&gt; loadClass(String name, boolean resolve) throws ClassNotFoundException { // 首先判断该类型是否已经被加载 Class c = findLoadedClass(name); if (c == null) { //如果没有被加载，就委托给父类加载或者委派给启动类加载器加载 try { if (parent != null) { //如果存在父类加载器，就委派给父类加载器加载 c = parent.loadClass(name, false); } else { // 递归终止条件 // 由于启动类加载器无法被Java程序直接引用，因此默认用 null 替代 // parent == null就意味着由启动类加载器尝试加载该类， // 即通过调用 native方法 findBootstrapClass0(String name)加载 c = findBootstrapClass0(name); } } catch (ClassNotFoundException e) { // 如果父类加载器不能完成加载请求时，再调用自身的findClass方法进行类加载，若加载成功，findClass方法返回的是defineClass方法的返回值 // 注意，若自身也加载不了，会产生ClassNotFoundException异常并向上抛出 c = findClass(name); } } //是否需要连接该类 if (resolve) { resolveClass(c); } return c; } 双亲委派的意义：" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://lzy175.github.io/posts/jdbc%E5%AF%B9%E5%8F%8C%E4%BA%B2%E5%A7%94%E6%B4%BE%E6%A8%A1%E5%9E%8B%E7%9A%84%E7%A0%B4%E5%9D%8F%E5%88%86%E6%9E%90/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2022-03-15T10:10:16+08:00" />
+<meta property="article:modified_time" content="2022-03-15T10:10:16+08:00" />
+
+
+
+<meta itemprop="name" content="JDBC对双亲委派模型的破坏分析">
+<meta itemprop="description" content="类加载器 通过类的全限定名获取类的二进制文件流。是对类进行解析的重要工具。
+类加载器有三种，依次是启动类加载器（bootstrapClassLoader），扩展类加载器，和应用程序类加载器（AppclassLoader).
+启动类加载器负责加载java的核心类库，比如rt.jar这种；
+扩展类加载器，一般是在扩展目录下加载类库，\lib\ext目录或者java.ext.dirs系统变量指定的路径中的所有目录；
+应用程序类加载器负责加载环境变量classPath或者java.class.path指定路径下的类库。是应用程序中默认的类加载器。
+双亲委派的具体内容就是：
+一个类加载器在加载某一个类的时候，首先委派给他的父类加载器去加载，依次递归，所以所有的加载请求其实都会汇聚到启动类加载器里面，如果父类加载器可以完成这个类的加载，那么就成功返回，如果加载不了，再由子类加载器进行加载。
+代码角度分析类加载的过程如下：
+public Class&lt;?&gt; loadClass(String name) throws ClassNotFoundException { return loadClass(name, false); } protected synchronized Class&lt;?&gt; loadClass(String name, boolean resolve) throws ClassNotFoundException { // 首先判断该类型是否已经被加载 Class c = findLoadedClass(name); if (c == null) { //如果没有被加载，就委托给父类加载或者委派给启动类加载器加载 try { if (parent != null) { //如果存在父类加载器，就委派给父类加载器加载 c = parent.loadClass(name, false); } else { // 递归终止条件 // 由于启动类加载器无法被Java程序直接引用，因此默认用 null 替代 // parent == null就意味着由启动类加载器尝试加载该类， // 即通过调用 native方法 findBootstrapClass0(String name)加载 c = findBootstrapClass0(name); } } catch (ClassNotFoundException e) { // 如果父类加载器不能完成加载请求时，再调用自身的findClass方法进行类加载，若加载成功，findClass方法返回的是defineClass方法的返回值 // 注意，若自身也加载不了，会产生ClassNotFoundException异常并向上抛出 c = findClass(name); } } //是否需要连接该类 if (resolve) { resolveClass(c); } return c; } 双亲委派的意义："><meta itemprop="datePublished" content="2022-03-15T10:10:16+08:00" />
+<meta itemprop="dateModified" content="2022-03-15T10:10:16+08:00" />
+<meta itemprop="wordCount" content="219">
+<meta itemprop="keywords" content="" />
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="JDBC对双亲委派模型的破坏分析"/>
+<meta name="twitter:description" content="类加载器 通过类的全限定名获取类的二进制文件流。是对类进行解析的重要工具。
+类加载器有三种，依次是启动类加载器（bootstrapClassLoader），扩展类加载器，和应用程序类加载器（AppclassLoader).
+启动类加载器负责加载java的核心类库，比如rt.jar这种；
+扩展类加载器，一般是在扩展目录下加载类库，\lib\ext目录或者java.ext.dirs系统变量指定的路径中的所有目录；
+应用程序类加载器负责加载环境变量classPath或者java.class.path指定路径下的类库。是应用程序中默认的类加载器。
+双亲委派的具体内容就是：
+一个类加载器在加载某一个类的时候，首先委派给他的父类加载器去加载，依次递归，所以所有的加载请求其实都会汇聚到启动类加载器里面，如果父类加载器可以完成这个类的加载，那么就成功返回，如果加载不了，再由子类加载器进行加载。
+代码角度分析类加载的过程如下：
+public Class&lt;?&gt; loadClass(String name) throws ClassNotFoundException { return loadClass(name, false); } protected synchronized Class&lt;?&gt; loadClass(String name, boolean resolve) throws ClassNotFoundException { // 首先判断该类型是否已经被加载 Class c = findLoadedClass(name); if (c == null) { //如果没有被加载，就委托给父类加载或者委派给启动类加载器加载 try { if (parent != null) { //如果存在父类加载器，就委派给父类加载器加载 c = parent.loadClass(name, false); } else { // 递归终止条件 // 由于启动类加载器无法被Java程序直接引用，因此默认用 null 替代 // parent == null就意味着由启动类加载器尝试加载该类， // 即通过调用 native方法 findBootstrapClass0(String name)加载 c = findBootstrapClass0(name); } } catch (ClassNotFoundException e) { // 如果父类加载器不能完成加载请求时，再调用自身的findClass方法进行类加载，若加载成功，findClass方法返回的是defineClass方法的返回值 // 注意，若自身也加载不了，会产生ClassNotFoundException异常并向上抛出 c = findClass(name); } } //是否需要连接该类 if (resolve) { resolveClass(c); } return c; } 双亲委派的意义："/>
+<meta name="twitter:site" content="@https://www.twitter.com/"/>
+
+
+    </head>
+<body>
+    <nav class="main-nav">
+	
+		<a href='https://lzy175.github.io/'> <span class="arrow">←</span>Home</a>
+	
+
+	
+
+	
+		<a class="cta" href="https://lzy175.github.io/index.xml">Subscribe</a>
+	
+</nav>
+
+    <section id="wrapper">
+        
+        
+<article class="post">
+    <header>
+        <h1>JDBC对双亲委派模型的破坏分析</h1>
+        <h2 class="subtitle"></h2>
+        <h2 class="headline">
+        March 15, 2022
+        <br>
+        
+        </h2>
+    </header>
+    <section id="post-body">
+        <h1 id="类加载器">类加载器</h1>
+<p>通过类的全限定名获取类的二进制文件流。是对类进行解析的重要工具。</p>
+<p>类加载器有三种，依次是启动类加载器（bootstrapClassLoader），扩展类加载器，和应用程序类加载器（AppclassLoader).</p>
+<p>启动类加载器负责加载java的核心类库，比如rt.jar这种；</p>
+<p>扩展类加载器，一般是在扩展目录下加载类库，\lib\ext目录或者java.ext.dirs系统变量指定的路径中的所有目录；</p>
+<p>应用程序类加载器负责加载环境变量classPath或者java.class.path指定路径下的类库。是应用程序中默认的类加载器。</p>
+<p>双亲委派的具体内容就是：</p>
+<p>一个类加载器在加载某一个类的时候，首先委派给他的父类加载器去加载，依次递归，所以所有的加载请求其实都会汇聚到启动类加载器里面，如果父类加载器可以完成这个类的加载，那么就成功返回，如果加载不了，再由子类加载器进行加载。</p>
+<p>代码角度分析类加载的过程如下：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">public</span> Class<span style="color:#f92672">&lt;?&gt;</span> loadClass<span style="color:#f92672">(</span>String name<span style="color:#f92672">)</span> <span style="color:#66d9ef">throws</span> ClassNotFoundException <span style="color:#f92672">{</span>  
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> loadClass<span style="color:#f92672">(</span>name<span style="color:#f92672">,</span> <span style="color:#66d9ef">false</span><span style="color:#f92672">);</span>  
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>  
+</span></span><span style="display:flex;"><span>  
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">protected</span> <span style="color:#66d9ef">synchronized</span> Class<span style="color:#f92672">&lt;?&gt;</span> loadClass<span style="color:#f92672">(</span>String name<span style="color:#f92672">,</span> <span style="color:#66d9ef">boolean</span> resolve<span style="color:#f92672">)</span>  
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">throws</span> ClassNotFoundException <span style="color:#f92672">{</span>  
+</span></span><span style="display:flex;"><span>  
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 首先判断该类型是否已经被加载  
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    Class c <span style="color:#f92672">=</span> findLoadedClass<span style="color:#f92672">(</span>name<span style="color:#f92672">);</span>  
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>c <span style="color:#f92672">==</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>  
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">//如果没有被加载，就委托给父类加载或者委派给启动类加载器加载  
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#66d9ef">try</span> <span style="color:#f92672">{</span>  
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>parent <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>  
+</span></span><span style="display:flex;"><span>                <span style="color:#75715e">//如果存在父类加载器，就委派给父类加载器加载  
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>                c <span style="color:#f92672">=</span> parent<span style="color:#f92672">.</span><span style="color:#a6e22e">loadClass</span><span style="color:#f92672">(</span>name<span style="color:#f92672">,</span> <span style="color:#66d9ef">false</span><span style="color:#f92672">);</span>  
+</span></span><span style="display:flex;"><span>            <span style="color:#f92672">}</span> <span style="color:#66d9ef">else</span> <span style="color:#f92672">{</span>    <span style="color:#75715e">// 递归终止条件
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>                <span style="color:#75715e">// 由于启动类加载器无法被Java程序直接引用，因此默认用 null 替代
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>                <span style="color:#75715e">// parent == null就意味着由启动类加载器尝试加载该类，  
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>                <span style="color:#75715e">// 即通过调用 native方法 findBootstrapClass0(String name)加载  
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>                c <span style="color:#f92672">=</span> findBootstrapClass0<span style="color:#f92672">(</span>name<span style="color:#f92672">);</span>  
+</span></span><span style="display:flex;"><span>            <span style="color:#f92672">}</span>  
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">}</span> <span style="color:#66d9ef">catch</span> <span style="color:#f92672">(</span>ClassNotFoundException e<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>  
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">// 如果父类加载器不能完成加载请求时，再调用自身的findClass方法进行类加载，若加载成功，findClass方法返回的是defineClass方法的返回值
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>            <span style="color:#75715e">// 注意，若自身也加载不了，会产生ClassNotFoundException异常并向上抛出
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>            c <span style="color:#f92672">=</span> findClass<span style="color:#f92672">(</span>name<span style="color:#f92672">);</span>  
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">}</span>  
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>  
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">//是否需要连接该类
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>resolve<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>  
+</span></span><span style="display:flex;"><span>        resolveClass<span style="color:#f92672">(</span>c<span style="color:#f92672">);</span>  
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>  
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> c<span style="color:#f92672">;</span>  
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span></code></pre></div><p>双亲委派的意义：</p>
+<p>1、保证了每个类只加载一次，不会被重复加载；</p>
+<p>2、保证了一些核心类库的安全性，一些规定好的只能是启动类加载器加载的那些。比如如果自定义了一个Integer类，但是由于双亲委派，最终还是会加载使用bootstrapClassLoader加载的那个类。</p>
+<h1 id="jdbc对双亲委派模型的破坏">JDBC对双亲委派模型的破坏</h1>
+<p>jdbc4.0之后，不在需要调用Class.forName来加载驱动程序，只需要把驱动的jar包放到工程的类加载路径中，那么驱动就会被自动加载。</p>
+<p>这个自动加载的技术叫做SPI。</p>
+<p>只要通过下面一句就可以创建数据库连接;</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>Connection con <span style="color:#f92672">=</span>    
+</span></span><span style="display:flex;"><span>             DriverManager<span style="color:#f92672">.</span><span style="color:#a6e22e">getConnection</span><span style="color:#f92672">(</span>url <span style="color:#f92672">,</span> username <span style="color:#f92672">,</span> password <span style="color:#f92672">)</span> <span style="color:#f92672">;</span>   
+</span></span></code></pre></div><p>DirverManager是用来管理Driver驱动的，Driver驱动的接口是在java包里面，但是具体的实现类都是厂家实现的，</p>
+<p>这些实现类以jar的形式 存在在classpath上，但是DriverManager这个类是在rt.jar中，也即是这个东西要使用启动类加载器进行加载，根据类加载机制，当被装载的类引用了另外一个类的时候，另外一个类需要使用当前类的类加载器进行加载，DriverManager这个类一定是要引用Driver实现类的，也就是说，按照这个规则，启动类加载器需要去加载第三方的Driver实现类，但是这一点根本做不到，因为启动类加载器是专门用来加载java核心类库的，加载不了第三方类。</p>
+<p>所以这时候，需要由子类加载器去加载Driver实现类。</p>
+<p>查看DriverManager类的源码，看到在使用DriverManager的时候会触发其静态代码块，调用 loadInitialDrivers() 方法，并调用ServiceLoader.load(Driver.class) 加载所有在META-INF/services/java.sql.Driver 文件里边的类到JVM内存，完成驱动的自动加载。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">static</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>        loadInitialDrivers<span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>        println<span style="color:#f92672">(</span><span style="color:#e6db74">&#34;JDBC DriverManager initialized&#34;</span><span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">loadInitialDrivers</span><span style="color:#f92672">()</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        AccessController<span style="color:#f92672">.</span><span style="color:#a6e22e">doPrivileged</span><span style="color:#f92672">(</span><span style="color:#66d9ef">new</span> PrivilegedAction<span style="color:#f92672">&lt;</span>Void<span style="color:#f92672">&gt;()</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">public</span> Void <span style="color:#a6e22e">run</span><span style="color:#f92672">()</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>                ServiceLoader<span style="color:#f92672">&lt;</span>Driver<span style="color:#f92672">&gt;</span> loadedDrivers <span style="color:#f92672">=</span> ServiceLoader<span style="color:#f92672">.</span><span style="color:#a6e22e">load</span><span style="color:#f92672">(</span>Driver<span style="color:#f92672">.</span><span style="color:#a6e22e">class</span><span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>                Iterator<span style="color:#f92672">&lt;</span>Driver<span style="color:#f92672">&gt;</span> driversIterator <span style="color:#f92672">=</span> loadedDrivers<span style="color:#f92672">.</span><span style="color:#a6e22e">iterator</span><span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">try</span><span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>                    <span style="color:#66d9ef">while</span><span style="color:#f92672">(</span>driversIterator<span style="color:#f92672">.</span><span style="color:#a6e22e">hasNext</span><span style="color:#f92672">())</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>                        driversIterator<span style="color:#f92672">.</span><span style="color:#a6e22e">next</span><span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>                    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#f92672">}</span> <span style="color:#66d9ef">catch</span><span style="color:#f92672">(</span>Throwable t<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#75715e">// Do nothing
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>                <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">});</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">static</span> <span style="color:#f92672">&lt;</span>S<span style="color:#f92672">&gt;</span> ServiceLoader<span style="color:#f92672">&lt;</span>S<span style="color:#f92672">&gt;</span> <span style="color:#a6e22e">load</span><span style="color:#f92672">(</span>Class<span style="color:#f92672">&lt;</span>S<span style="color:#f92672">&gt;</span> service<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 获取上下文类加载器
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        ClassLoader cl <span style="color:#f92672">=</span> Thread<span style="color:#f92672">.</span><span style="color:#a6e22e">currentThread</span><span style="color:#f92672">().</span><span style="color:#a6e22e">getContextClassLoader</span><span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> ServiceLoader<span style="color:#f92672">.</span><span style="color:#a6e22e">load</span><span style="color:#f92672">(</span>service<span style="color:#f92672">,</span> cl<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span></code></pre></div><p>那么这个上下文类加载器又是什么呢</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#a6e22e">Launcher</span><span style="color:#f92672">()</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">...</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">try</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">loader</span> <span style="color:#f92672">=</span> Launcher<span style="color:#f92672">.</span><span style="color:#a6e22e">AppClassLoader</span><span style="color:#f92672">.</span><span style="color:#a6e22e">getAppClassLoader</span><span style="color:#f92672">(</span>var1<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span> <span style="color:#66d9ef">catch</span> <span style="color:#f92672">(</span>IOException var9<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">throw</span> <span style="color:#66d9ef">new</span> InternalError<span style="color:#f92672">(</span><span style="color:#e6db74">&#34;Could not create application class loader&#34;</span><span style="color:#f92672">,</span> var9<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>    Thread<span style="color:#f92672">.</span><span style="color:#a6e22e">currentThread</span><span style="color:#f92672">().</span><span style="color:#a6e22e">setContextClassLoader</span><span style="color:#f92672">(</span><span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">loader</span><span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">...</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span></code></pre></div><p>可以看到，在 sun.misc.Launcher 初始化的时候，会获取AppClassLoader，然后将其设置为上下文类加载器，所以<strong>线程上下文类加载器默认情况下就是系统加载器</strong>。</p>
+<p>所以解决方法就是，在调用DriverManager时，会执行它的静态代码块，静态代码块中调用了serviceLoader.load方法，这个方法其实就是去获取线程上下文类加载器来加载Driver的具体实现类。<strong>线程上下文类加载器默认情况下就是系统加载器</strong>。</p>
+
+    </section>
+</article>
+
+<footer id="post-meta" class="clearfix">
+    <a href="https://twitter.com/Your%20Twitter%20account">
+    <img class="avatar" src="https://lzy175.github.io/images/avatar.png">
+    <div>
+        <span class="dark">ZhuoY Li</span>
+        <span>I&#39;m an blogger.</span>
+    </div>
+    </a>
+    <section id="sharing">
+        <a class="twitter" href="https://twitter.com/intent/tweet?text=https%3a%2f%2flzy175.github.io%2fposts%2fjdbc%25E5%25AF%25B9%25E5%258F%258C%25E4%25BA%25B2%25E5%25A7%2594%25E6%25B4%25BE%25E6%25A8%25A1%25E5%259E%258B%25E7%259A%2584%25E7%25A0%25B4%25E5%259D%258F%25E5%2588%2586%25E6%259E%2590%2f - JDBC%e5%af%b9%e5%8f%8c%e4%ba%b2%e5%a7%94%e6%b4%be%e6%a8%a1%e5%9e%8b%e7%9a%84%e7%a0%b4%e5%9d%8f%e5%88%86%e6%9e%90 by @Your%20Twitter%20account"><span class="icon-twitter"> tweet</span></a>
+
+<a class="facebook" href="#" onclick="
+    window.open(
+      'https://www.facebook.com/sharer/sharer.php?u='+encodeURIComponent(location.href),
+      'facebook-share-dialog',
+      'width=626,height=436');
+    return false;"><span class="icon-facebook-rect"> Share</span>
+</a>
+
+    </section>
+</footer>
+
+<div id="disqus_thread"></div>
+<script type="application/javascript">
+    window.disqus_config = function () {
+    
+    
+    
+    };
+    (function() {
+        if (["localhost", "127.0.0.1"].indexOf(window.location.hostname) != -1) {
+            document.getElementById('disqus_thread').innerHTML = 'Disqus comments not available by default when the website is previewed locally.';
+            return;
+        }
+        var d = document, s = d.createElement('script'); s.async = true;
+        s.src = '//' + "spf13" + '.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="https://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+<ul id="post-list" class="archive readmore">
+    <h3>Read more</h3>
+
+    
+    
+    
+        <li>
+            <a href="https://lzy175.github.io/posts/%E6%9C%89%E5%85%B3%E5%8D%95%E4%BE%8B%E6%A8%A1%E5%BC%8F%E5%92%8C%E4%BB%A3%E7%90%86%E6%A8%A1%E5%BC%8F%E7%9A%84%E5%AD%A6%E4%B9%A0/">有关单例模式和代理模式的学习<aside class="dates">Mar 18 2022</aside></a>
+        </li>
+    
+        <li>
+            <a href="https://lzy175.github.io/posts/spring%E4%B8%ADbean%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F%E6%BA%90%E7%A0%81%E7%9A%84%E4%BA%86%E8%A7%A3/">Spring中bean生命周期源码的了解<aside class="dates">Jan 15 2022</aside></a>
+        </li>
+    
+        <li>
+            <a href="https://lzy175.github.io/posts/aqs%E6%BA%90%E7%A0%81%E5%88%9D%E6%8E%A2/">AQS源码初探<aside class="dates">Sep 12 2021</aside></a>
+        </li>
+    
+        <li>
+            <a href="https://lzy175.github.io/posts/redis%E5%AE%9E%E7%8E%B0%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81%E4%B8%8E%E5%85%B6%E4%BB%96%E5%AE%9E%E7%8E%B0%E6%96%B9%E6%A1%88/">Redis实现分布式锁与其他实现方案<aside class="dates">Aug 25 2021</aside></a>
+        </li>
+    
+        <li>
+            <a href="https://lzy175.github.io/posts/%E5%AF%B9%E4%BA%8Eredis%E5%AE%9E%E9%99%85%E6%93%8D%E4%BD%9C%E7%9A%84%E5%AD%A6%E4%B9%A0/">对于redis实际操作的学习<aside class="dates">Jul 29 2021</aside></a>
+        </li>
+    
+        <li>
+            <a href="https://lzy175.github.io/posts/%E5%A4%9A%E8%B7%AF%E5%A4%8D%E7%94%A8io%E7%9A%84%E5%BA%95%E5%B1%82%E5%AE%9E%E7%8E%B0%E5%8F%8A%E7%A9%BA%E8%BD%AE%E8%AF%A2bug/">多路复用IO的底层实现及空轮询bug<aside class="dates">Jun 10 2021</aside></a>
+        </li>
+    
+        <li>
+            <a href="https://lzy175.github.io/posts/netty/">IO与Netty实操问题<aside class="dates">Jan 1 0001</aside></a>
+        </li>
+    
+        <li>
+            <a href="https://lzy175.github.io/posts/%E4%B8%89%E7%A7%8D%E6%97%B6%E9%97%B4%E5%A4%8D%E6%9D%82%E5%BA%A6%E4%B8%BAlogn%E7%9A%84%E6%8E%92%E5%BA%8F%E7%AE%97%E6%B3%95/">三种时间复杂度为logn的排序算法<aside class="dates">Jan 1 0001</aside></a>
+        </li>
+    
+        <li>
+            <a href="https://lzy175.github.io/posts/%E5%AF%B9%E4%BA%8Erpc%E6%A1%86%E6%9E%B6%E7%9A%84%E5%88%9D%E6%AD%A5%E7%90%86%E8%A7%A3/">对于RPC框架的初步理解<aside class="dates">Jan 1 0001</aside></a>
+        </li>
+    
+</ul>
+
+
+
+        <footer id="footer">
+    
+        <div id="social">
+
+	
+	
+    
+    <a class="symbol" href="https://www.dribbble.com/">
+        circledribble
+    </a>
+    
+    <a class="symbol" href="https://www.facebook.com/">
+        circlefacebook
+    </a>
+    
+    <a class="symbol" href="https://www.github.com/">
+        circlegithub
+    </a>
+    
+    <a class="symbol" href="https://www.twitter.com/">
+        circletwitterbird
+    </a>
+    
+
+
+</div>
+
+    
+    <p class="small">
+    
+        © Copyright 2022 ZhuoY Li
+    
+    </p>
+</footer>
+
+    </section>
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+<script src="https://lzy175.github.io/js/main.js"></script>
+<script src="https://lzy175.github.io/js/highlight.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+
+
+</body>
+</html>

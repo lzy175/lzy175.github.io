@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en-us">
+	<head>
+    <meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="author" content="ZhuoY Li">
+<meta name="description" content="It&#39;s never too late to learn.">
+<meta name="generator" content="Hugo 0.101.0" />
+<title>有关单例模式和代理模式的学习</title>
+<link rel="shortcut icon" href="https://lzy175.github.io/images/favicon.ico">
+<link rel="stylesheet" href="https://lzy175.github.io/css/style.css">
+<link rel="stylesheet" href="https://lzy175.github.io/css/highlight.css">
+
+
+
+<link rel="stylesheet" href="https://lzy175.github.io/css/monosocialiconsfont.css">
+
+
+
+<link href="https://lzy175.github.io/index.xml" rel="alternate" type="application/rss+xml" title="Hugo Cactus Theme" />
+
+
+<meta property="og:title" content="有关单例模式和代理模式的学习" />
+<meta property="og:description" content="单例模式 一个类只有一个实例，精髓在于构造方法私有化。
+饿汉式单例：
+public class study{ private static study s = new study(); private study(){ } public static study get(){ return s; } } 饱汉式单例：
+public class study{ private static study s; private study(){ } private synchronized static study get(){ if(s == null){ return new study(); } return s; } } 双重检验锁方式实现单例模式：
+为了解决同步和性能问题：
+public class Student{ private static volatile Student student; private Student(){} public static Student get(){ if(student == null){ synchronized(Student." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://lzy175.github.io/posts/%E6%9C%89%E5%85%B3%E5%8D%95%E4%BE%8B%E6%A8%A1%E5%BC%8F%E5%92%8C%E4%BB%A3%E7%90%86%E6%A8%A1%E5%BC%8F%E7%9A%84%E5%AD%A6%E4%B9%A0/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2022-03-18T16:49:17+08:00" />
+<meta property="article:modified_time" content="2022-03-18T16:49:17+08:00" />
+
+
+
+<meta itemprop="name" content="有关单例模式和代理模式的学习">
+<meta itemprop="description" content="单例模式 一个类只有一个实例，精髓在于构造方法私有化。
+饿汉式单例：
+public class study{ private static study s = new study(); private study(){ } public static study get(){ return s; } } 饱汉式单例：
+public class study{ private static study s; private study(){ } private synchronized static study get(){ if(s == null){ return new study(); } return s; } } 双重检验锁方式实现单例模式：
+为了解决同步和性能问题：
+public class Student{ private static volatile Student student; private Student(){} public static Student get(){ if(student == null){ synchronized(Student."><meta itemprop="datePublished" content="2022-03-18T16:49:17+08:00" />
+<meta itemprop="dateModified" content="2022-03-18T16:49:17+08:00" />
+<meta itemprop="wordCount" content="492">
+<meta itemprop="keywords" content="" />
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="有关单例模式和代理模式的学习"/>
+<meta name="twitter:description" content="单例模式 一个类只有一个实例，精髓在于构造方法私有化。
+饿汉式单例：
+public class study{ private static study s = new study(); private study(){ } public static study get(){ return s; } } 饱汉式单例：
+public class study{ private static study s; private study(){ } private synchronized static study get(){ if(s == null){ return new study(); } return s; } } 双重检验锁方式实现单例模式：
+为了解决同步和性能问题：
+public class Student{ private static volatile Student student; private Student(){} public static Student get(){ if(student == null){ synchronized(Student."/>
+<meta name="twitter:site" content="@https://www.twitter.com/"/>
+
+
+    </head>
+<body>
+    <nav class="main-nav">
+	
+		<a href='https://lzy175.github.io/'> <span class="arrow">←</span>Home</a>
+	
+
+	
+
+	
+		<a class="cta" href="https://lzy175.github.io/index.xml">Subscribe</a>
+	
+</nav>
+
+    <section id="wrapper">
+        
+        
+<article class="post">
+    <header>
+        <h1>有关单例模式和代理模式的学习</h1>
+        <h2 class="subtitle"></h2>
+        <h2 class="headline">
+        March 18, 2022
+        <br>
+        
+        </h2>
+    </header>
+    <section id="post-body">
+        <h2 id="单例模式">单例模式</h2>
+<p>一个类只有一个实例，精髓在于构造方法私有化。</p>
+<p>饿汉式单例：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">study</span><span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">static</span> study s <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> study<span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> <span style="color:#a6e22e">study</span><span style="color:#f92672">(){</span>
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">static</span> study <span style="color:#a6e22e">get</span><span style="color:#f92672">(){</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> s<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span></code></pre></div><p>饱汉式单例：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">study</span><span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">static</span> study s<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> <span style="color:#a6e22e">study</span><span style="color:#f92672">(){</span>
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">synchronized</span> <span style="color:#66d9ef">static</span> study <span style="color:#a6e22e">get</span><span style="color:#f92672">(){</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span><span style="color:#f92672">(</span>s <span style="color:#f92672">==</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">){</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">new</span> study<span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> s<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span></code></pre></div><p>双重检验锁方式实现单例模式：</p>
+<p>为了解决同步和性能问题：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Student</span><span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">volatile</span> Student student<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span>  <span style="color:#a6e22e">Student</span><span style="color:#f92672">(){}</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">static</span> Student <span style="color:#a6e22e">get</span><span style="color:#f92672">(){</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span><span style="color:#f92672">(</span>student <span style="color:#f92672">==</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">){</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">synchronized</span><span style="color:#f92672">(</span>Student<span style="color:#f92672">.</span><span style="color:#a6e22e">class</span><span style="color:#f92672">){</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">if</span><span style="color:#f92672">(</span>student <span style="color:#f92672">=</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">){</span>
+</span></span><span style="display:flex;"><span>                    student <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> Student<span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> student<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>  
+</span></span></code></pre></div><h2 id="静态代理模式">静态代理模式</h2>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Student</span> <span style="color:#66d9ef">implements</span> Person<span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> String name<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> <span style="color:#a6e22e">Student</span><span style="color:#f92672">()</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> <span style="color:#a6e22e">Student</span><span style="color:#f92672">(</span>String name<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">name</span> <span style="color:#f92672">=</span> name<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">@Override</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">wakeup</span><span style="color:#f92672">()</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>        System<span style="color:#f92672">.</span><span style="color:#a6e22e">out</span><span style="color:#f92672">.</span><span style="color:#a6e22e">println</span><span style="color:#f92672">(</span>StrUtil<span style="color:#f92672">.</span><span style="color:#a6e22e">format</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;学生[{}]早晨醒来啦&#34;</span><span style="color:#f92672">,</span>name<span style="color:#f92672">));</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">@Override</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">sleep</span><span style="color:#f92672">()</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>        System<span style="color:#f92672">.</span><span style="color:#a6e22e">out</span><span style="color:#f92672">.</span><span style="color:#a6e22e">println</span><span style="color:#f92672">(</span>StrUtil<span style="color:#f92672">.</span><span style="color:#a6e22e">format</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;学生[{}]晚上睡觉啦&#34;</span><span style="color:#f92672">,</span>name<span style="color:#f92672">));</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">PersonProxy</span> <span style="color:#66d9ef">implements</span> Person <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> Person person<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> <span style="color:#a6e22e">PersonProxy</span><span style="color:#f92672">(</span>Person person<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">person</span> <span style="color:#f92672">=</span> person<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">@Override</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">wakeup</span><span style="color:#f92672">()</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>        System<span style="color:#f92672">.</span><span style="color:#a6e22e">out</span><span style="color:#f92672">.</span><span style="color:#a6e22e">println</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;早安~&#34;</span><span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>        person<span style="color:#f92672">.</span><span style="color:#a6e22e">wakeup</span><span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">@Override</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">sleep</span><span style="color:#f92672">()</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>        System<span style="color:#f92672">.</span><span style="color:#a6e22e">out</span><span style="color:#f92672">.</span><span style="color:#a6e22e">println</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;晚安~&#34;</span><span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>        person<span style="color:#f92672">.</span><span style="color:#a6e22e">sleep</span><span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span></code></pre></div><h2 id="jdk动态代理模式">jdk动态代理模式</h2>
+<p>创建一个代理类，实现InvocationHandler接口</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#f92672">&lt;--</span> 作用 <span style="color:#f92672">--&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// 1.  生成 动态代理对象
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// 2.  指定 代理对象运行目标对象方法时需要完成的 具体任务
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// 注：需实现InvocationHandler接口 = 调用处理器 接口
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// 所以称为 调用处理器类
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span> <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">DynamicProxy</span> <span style="color:#66d9ef">implements</span> InvocationHandler <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 声明代理对象
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#75715e">// 作用：绑定关系，即关联到哪个接口（与具体的实现类绑定）的哪些方法将被调用时，执行invoke（）
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">private</span> Object ProxyObject<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> Object <span style="color:#a6e22e">newProxyInstance</span><span style="color:#f92672">(</span>Object ProxyObject<span style="color:#f92672">){</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">ProxyObject</span> <span style="color:#f92672">=</span>ProxyObject<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> Proxy<span style="color:#f92672">.</span><span style="color:#a6e22e">newProxyInstance</span><span style="color:#f92672">(</span>ProxyObject<span style="color:#f92672">.</span><span style="color:#a6e22e">getClass</span><span style="color:#f92672">().</span><span style="color:#a6e22e">getClassLoader</span><span style="color:#f92672">(),</span>
+</span></span><span style="display:flex;"><span>                ProxyObject<span style="color:#f92672">.</span><span style="color:#a6e22e">getClass</span><span style="color:#f92672">().</span><span style="color:#a6e22e">getInterfaces</span><span style="color:#f92672">(),</span><span style="color:#66d9ef">this</span><span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// Proxy类 = 动态代理类的主类 
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#75715e">// Proxy.newProxyInstance（）作用：根据指定的类装载器、一组接口 &amp; 调用处理器 生成动态代理类实例，并最终返回
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#75715e">// 参数说明：
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#75715e">// 参数1：指定产生代理对象的类加载器，需要将其指定为和目标对象同一个类加载器
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#75715e">// 参数2：指定目标对象的实现接口
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#75715e">// 即要给目标对象提供一组什么接口。若提供了一组接口给它，那么该代理对象就默认实现了该接口，这样就能调用这组接口中的方法
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#75715e">// 参数3：指定InvocationHandler对象。即动态代理对象在调用方法时，会关联到哪个InvocationHandler对象
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">//  复写InvocationHandler接口的invoke（）
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#75715e">//  动态代理对象调用目标对象的任何方法前，都会调用调用处理器类的invoke（）
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#a6e22e">@Override</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> Object <span style="color:#a6e22e">invoke</span><span style="color:#f92672">(</span>Object proxy<span style="color:#f92672">,</span> Method method<span style="color:#f92672">,</span> Object<span style="color:#f92672">[]</span> args<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">// 参数说明：
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>            <span style="color:#75715e">// 参数1：动态代理对象（即哪个动态代理对象调用了method（）
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>            <span style="color:#75715e">// 参数2：目标对象被调用的方法
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>            <span style="color:#75715e">// 参数3：指定被调用方法的参数
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>            <span style="color:#66d9ef">throws</span> Throwable <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>                System<span style="color:#f92672">.</span><span style="color:#a6e22e">out</span><span style="color:#f92672">.</span><span style="color:#a6e22e">println</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;代购出门了&#34;</span><span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>                Object result <span style="color:#f92672">=</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#75715e">// 通过Java反射机制调用目标对象方法
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>                result <span style="color:#f92672">=</span> method<span style="color:#f92672">.</span><span style="color:#a6e22e">invoke</span><span style="color:#f92672">(</span>ProxyObject<span style="color:#f92672">,</span> args<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> result<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span></code></pre></div><p>上面代码展示了动态代理的基本实现思路，定义object对象为委托类的对象，而实际执行的方法是在<code>invoke()</code>方法中完成的。此时我们不用再关心代理的对象是谁，只需要实现一套逻辑即可。下面我们修改一下测试类。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">interface</span> <span style="color:#a6e22e">Subject</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 定义目标对象的接口方法
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#75715e">// 代购物品
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">public</span>  <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">buybuybuy</span><span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#75715e">// 小成，真正的想买Mac的对象 = 目标对象 = 被代理的对象
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// 实现抽象目标对象的接口
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Buyer1</span> <span style="color:#66d9ef">implements</span> Subject  <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">@Override</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">buybuybuy</span><span style="color:#f92672">()</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>        System<span style="color:#f92672">.</span><span style="color:#a6e22e">out</span><span style="color:#f92672">.</span><span style="color:#a6e22e">println</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;小成要买Mac&#34;</span><span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#75715e">// 小何，真正的想买iPhone的对象 = 目标对象 = 被代理的对象
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// 实现抽象目标对象的接口
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Buyer2</span> <span style="color:#66d9ef">implements</span> Subject  <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">@Override</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">buybuybuy</span><span style="color:#f92672">()</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>        System<span style="color:#f92672">.</span><span style="color:#a6e22e">out</span><span style="color:#f92672">.</span><span style="color:#a6e22e">println</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;小何要买iPhone&#34;</span><span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">MainActivity</span> <span style="color:#66d9ef">extends</span> AppCompatActivity <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">@Override</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">protected</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">onCreate</span><span style="color:#f92672">(</span>Bundle savedInstanceState<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">super</span><span style="color:#f92672">.</span><span style="color:#a6e22e">onCreate</span><span style="color:#f92672">(</span>savedInstanceState<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>        setContentView<span style="color:#f92672">(</span>R<span style="color:#f92672">.</span><span style="color:#a6e22e">layout</span><span style="color:#f92672">.</span><span style="color:#a6e22e">activity_main</span><span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 1. 创建调用处理器类对象
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        DynamicProxy DynamicProxy <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> DynamicProxy<span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 2. 创建目标对象对象
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        Buyer1 mBuyer1 <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> Buyer1<span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 3. 创建动态代理类 &amp; 对象：通过调用处理器类对象newProxyInstance（）
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#75715e">// 传入上述目标对象对象
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        Subject Buyer1_DynamicProxy <span style="color:#f92672">=</span> <span style="color:#f92672">(</span>Subject<span style="color:#f92672">)</span> DynamicProxy<span style="color:#f92672">.</span><span style="color:#a6e22e">newProxyInstance</span><span style="color:#f92672">(</span>mBuyer1<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 4. 通过调用动态代理对象方法从而调用目标对象方法
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#75715e">// 实际上是调用了invoke（），再通过invoke（）里的反射机制调用目标对象的方法
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        Buyer1_DynamicProxy<span style="color:#f92672">.</span><span style="color:#a6e22e">buybuybuy</span><span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 以上代购为小成代购Mac
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 以下是代购为小何代购iPhone
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        Buyer2 mBuyer2 <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> Buyer2<span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>        Subject Buyer2_DynamicProxy <span style="color:#f92672">=</span> <span style="color:#f92672">(</span>Subject<span style="color:#f92672">)</span> DynamicProxy<span style="color:#f92672">.</span><span style="color:#a6e22e">newProxyInstance</span><span style="color:#f92672">(</span>mBuyer2<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>        Buyer2_DynamicProxy<span style="color:#f92672">.</span><span style="color:#a6e22e">buybuybuy</span><span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span></code></pre></div><h2 id="cglib动态代理">CGLIB动态代理</h2>
+<p>JDK动态代理的核心是通过重写被代理对象所实现的接口中的方法来重新生成代理类来实现的，那么假如被代理对象没有实现接口呢？那么这时候就需要CGLIB动态代理了。</p>
+<p>CGLib采用了非常底层的字节码技术，其原理是通过字节码技术为一个类创建子类，并在子类中采用方法拦截的技术拦截所有父类方法的调用，顺势织入横切逻辑。</p>
+<p><strong>注意</strong>：因为CGLIB是通过继承目标类来重写其方法来实现的，故而如果是final和private方法则无法被重写，也就是无法被代理。</p>
+<p>创建被代理类：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">SayHello</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">say</span><span style="color:#f92672">(){</span>
+</span></span><span style="display:flex;"><span>        System<span style="color:#f92672">.</span><span style="color:#a6e22e">out</span><span style="color:#f92672">.</span><span style="color:#a6e22e">println</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;hello&#34;</span><span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span></code></pre></div><p>创建代理类：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#75715e">/**
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> *代理类 
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> */</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">ProxyCglib</span> <span style="color:#66d9ef">implements</span> MethodInterceptor<span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// enhancer 底层字节码增强器
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>     <span style="color:#66d9ef">private</span> Enhancer enhancer <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> Enhancer<span style="color:#f92672">();</span>  
+</span></span><span style="display:flex;"><span>     <span style="color:#66d9ef">public</span> Object <span style="color:#a6e22e">getProxy</span><span style="color:#f92672">(</span>Class clazz<span style="color:#f92672">){</span>  
+</span></span><span style="display:flex;"><span>          <span style="color:#75715e">//设置需要创建子类的类  
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>          enhancer<span style="color:#f92672">.</span><span style="color:#a6e22e">setSuperclass</span><span style="color:#f92672">(</span>clazz<span style="color:#f92672">);</span>  
+</span></span><span style="display:flex;"><span>          enhancer<span style="color:#f92672">.</span><span style="color:#a6e22e">setCallback</span><span style="color:#f92672">(</span><span style="color:#66d9ef">this</span><span style="color:#f92672">);</span>  
+</span></span><span style="display:flex;"><span>          <span style="color:#75715e">//通过字节码技术动态创建子类实例  
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>          <span style="color:#66d9ef">return</span> enhancer<span style="color:#f92672">.</span><span style="color:#a6e22e">create</span><span style="color:#f92672">();</span>  
+</span></span><span style="display:flex;"><span>     <span style="color:#f92672">}</span>  
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>     <span style="color:#75715e">//实现MethodInterceptor接口方法  
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>     <span style="color:#66d9ef">public</span> Object <span style="color:#a6e22e">intercept</span><span style="color:#f92672">(</span>Object obj<span style="color:#f92672">,</span> Method method<span style="color:#f92672">,</span> Object<span style="color:#f92672">[]</span> args<span style="color:#f92672">,</span> MethodProxy proxy<span style="color:#f92672">)</span> <span style="color:#66d9ef">throws</span> Throwable <span style="color:#f92672">{</span>  
+</span></span><span style="display:flex;"><span>          System<span style="color:#f92672">.</span><span style="color:#a6e22e">out</span><span style="color:#f92672">.</span><span style="color:#a6e22e">println</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;可以在调用实际方法前做一些事情&#34;</span><span style="color:#f92672">);</span>  
+</span></span><span style="display:flex;"><span>          <span style="color:#75715e">//通过代理类调用父类中的方法  
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>          Object result <span style="color:#f92672">=</span> proxy<span style="color:#f92672">.</span><span style="color:#a6e22e">invokeSuper</span><span style="color:#f92672">(</span>obj<span style="color:#f92672">,</span> args<span style="color:#f92672">);</span>  
+</span></span><span style="display:flex;"><span>          System<span style="color:#f92672">.</span><span style="color:#a6e22e">out</span><span style="color:#f92672">.</span><span style="color:#a6e22e">println</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;可以在调用实际方法后做一些事情&#34;</span><span style="color:#f92672">);</span>  
+</span></span><span style="display:flex;"><span>          <span style="color:#66d9ef">return</span> result<span style="color:#f92672">;</span>  
+</span></span><span style="display:flex;"><span>     <span style="color:#f92672">}</span> 
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span></code></pre></div><p>测试：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Mytest</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">main</span><span style="color:#f92672">(</span>String<span style="color:#f92672">[]</span> args<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>          ProxyCglib proxy <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> ProxyCglib<span style="color:#f92672">();</span>  
+</span></span><span style="display:flex;"><span>          <span style="color:#75715e">//通过生成子类的方式创建代理类  
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>          SayHello proxyImp <span style="color:#f92672">=</span> <span style="color:#f92672">(</span>SayHello<span style="color:#f92672">)</span>proxy<span style="color:#f92672">.</span><span style="color:#a6e22e">getProxy</span><span style="color:#f92672">(</span>SayHello<span style="color:#f92672">.</span><span style="color:#a6e22e">class</span><span style="color:#f92672">);</span>  
+</span></span><span style="display:flex;"><span>          proxyImp<span style="color:#f92672">.</span><span style="color:#a6e22e">say</span><span style="color:#f92672">();</span>  
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span></code></pre></div><h2 id="jdk和cglib动态代理对比">JDK和CGLib动态代理对比</h2>
+<p>JDK 动态代理是实现了被代理对象所实现的接口，CGLib是继承了被代理对象。 JDK和CGLib 都是在运行期生成字节码,JDK是直接写Class字节码，CGLib 使用 ASM 框架写Class字节码，Cglib代理实现更复杂，生成代理类的效率比JDK代理低。</p>
+<p>JDK 调用代理方法，是通过反射机制调用,CGLib 是通过FastClass机制直接调用方法,CGLib 执行效率更高。</p>
+<h3 id="原理区别">原理区别：</h3>
+<p>java动态代理是利用反射机制生成一个实现代理接口的匿名类，在调用具体方法前调用InvokeHandler来处理。核心是实现InvocationHandler接口，使用invoke()方法进行面向切面的处理，调用相应的通知。</p>
+<p>而cglib动态代理是利用asm开源包，对代理对象类的class文件加载进来，通过修改其字节码生成子类来处理。核心是实现MethodInterceptor接口，使用intercept()方法进行面向切面的处理，调用相应的通知。</p>
+<p>1、如果目标对象实现了接口，默认情况下会采用JDK的动态代理实现AOP</p>
+<p>2、如果目标对象实现了接口，可以强制使用CGLIB实现AOP</p>
+<p>3、如果目标对象没有实现了接口，必须采用CGLIB库，spring会自动在JDK动态代理和CGLIB之间转换</p>
+
+    </section>
+</article>
+
+<footer id="post-meta" class="clearfix">
+    <a href="https://twitter.com/Your%20Twitter%20account">
+    <img class="avatar" src="https://lzy175.github.io/images/avatar.png">
+    <div>
+        <span class="dark">ZhuoY Li</span>
+        <span>I&#39;m an blogger.</span>
+    </div>
+    </a>
+    <section id="sharing">
+        <a class="twitter" href="https://twitter.com/intent/tweet?text=https%3a%2f%2flzy175.github.io%2fposts%2f%25E6%259C%2589%25E5%2585%25B3%25E5%258D%2595%25E4%25BE%258B%25E6%25A8%25A1%25E5%25BC%258F%25E5%2592%258C%25E4%25BB%25A3%25E7%2590%2586%25E6%25A8%25A1%25E5%25BC%258F%25E7%259A%2584%25E5%25AD%25A6%25E4%25B9%25A0%2f - %e6%9c%89%e5%85%b3%e5%8d%95%e4%be%8b%e6%a8%a1%e5%bc%8f%e5%92%8c%e4%bb%a3%e7%90%86%e6%a8%a1%e5%bc%8f%e7%9a%84%e5%ad%a6%e4%b9%a0 by @Your%20Twitter%20account"><span class="icon-twitter"> tweet</span></a>
+
+<a class="facebook" href="#" onclick="
+    window.open(
+      'https://www.facebook.com/sharer/sharer.php?u='+encodeURIComponent(location.href),
+      'facebook-share-dialog',
+      'width=626,height=436');
+    return false;"><span class="icon-facebook-rect"> Share</span>
+</a>
+
+    </section>
+</footer>
+
+<div id="disqus_thread"></div>
+<script type="application/javascript">
+    window.disqus_config = function () {
+    
+    
+    
+    };
+    (function() {
+        if (["localhost", "127.0.0.1"].indexOf(window.location.hostname) != -1) {
+            document.getElementById('disqus_thread').innerHTML = 'Disqus comments not available by default when the website is previewed locally.';
+            return;
+        }
+        var d = document, s = d.createElement('script'); s.async = true;
+        s.src = '//' + "spf13" + '.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="https://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+<ul id="post-list" class="archive readmore">
+    <h3>Read more</h3>
+
+    
+    
+    
+        <li>
+            <a href="https://lzy175.github.io/posts/jdbc%E5%AF%B9%E5%8F%8C%E4%BA%B2%E5%A7%94%E6%B4%BE%E6%A8%A1%E5%9E%8B%E7%9A%84%E7%A0%B4%E5%9D%8F%E5%88%86%E6%9E%90/">JDBC对双亲委派模型的破坏分析<aside class="dates">Mar 15 2022</aside></a>
+        </li>
+    
+        <li>
+            <a href="https://lzy175.github.io/posts/spring%E4%B8%ADbean%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F%E6%BA%90%E7%A0%81%E7%9A%84%E4%BA%86%E8%A7%A3/">Spring中bean生命周期源码的了解<aside class="dates">Jan 15 2022</aside></a>
+        </li>
+    
+        <li>
+            <a href="https://lzy175.github.io/posts/aqs%E6%BA%90%E7%A0%81%E5%88%9D%E6%8E%A2/">AQS源码初探<aside class="dates">Sep 12 2021</aside></a>
+        </li>
+    
+        <li>
+            <a href="https://lzy175.github.io/posts/redis%E5%AE%9E%E7%8E%B0%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81%E4%B8%8E%E5%85%B6%E4%BB%96%E5%AE%9E%E7%8E%B0%E6%96%B9%E6%A1%88/">Redis实现分布式锁与其他实现方案<aside class="dates">Aug 25 2021</aside></a>
+        </li>
+    
+        <li>
+            <a href="https://lzy175.github.io/posts/%E5%AF%B9%E4%BA%8Eredis%E5%AE%9E%E9%99%85%E6%93%8D%E4%BD%9C%E7%9A%84%E5%AD%A6%E4%B9%A0/">对于redis实际操作的学习<aside class="dates">Jul 29 2021</aside></a>
+        </li>
+    
+        <li>
+            <a href="https://lzy175.github.io/posts/%E5%A4%9A%E8%B7%AF%E5%A4%8D%E7%94%A8io%E7%9A%84%E5%BA%95%E5%B1%82%E5%AE%9E%E7%8E%B0%E5%8F%8A%E7%A9%BA%E8%BD%AE%E8%AF%A2bug/">多路复用IO的底层实现及空轮询bug<aside class="dates">Jun 10 2021</aside></a>
+        </li>
+    
+        <li>
+            <a href="https://lzy175.github.io/posts/netty/">IO与Netty实操问题<aside class="dates">Jan 1 0001</aside></a>
+        </li>
+    
+        <li>
+            <a href="https://lzy175.github.io/posts/%E4%B8%89%E7%A7%8D%E6%97%B6%E9%97%B4%E5%A4%8D%E6%9D%82%E5%BA%A6%E4%B8%BAlogn%E7%9A%84%E6%8E%92%E5%BA%8F%E7%AE%97%E6%B3%95/">三种时间复杂度为logn的排序算法<aside class="dates">Jan 1 0001</aside></a>
+        </li>
+    
+        <li>
+            <a href="https://lzy175.github.io/posts/%E5%AF%B9%E4%BA%8Erpc%E6%A1%86%E6%9E%B6%E7%9A%84%E5%88%9D%E6%AD%A5%E7%90%86%E8%A7%A3/">对于RPC框架的初步理解<aside class="dates">Jan 1 0001</aside></a>
+        </li>
+    
+</ul>
+
+
+
+        <footer id="footer">
+    
+        <div id="social">
+
+	
+	
+    
+    <a class="symbol" href="https://www.dribbble.com/">
+        circledribble
+    </a>
+    
+    <a class="symbol" href="https://www.facebook.com/">
+        circlefacebook
+    </a>
+    
+    <a class="symbol" href="https://www.github.com/">
+        circlegithub
+    </a>
+    
+    <a class="symbol" href="https://www.twitter.com/">
+        circletwitterbird
+    </a>
+    
+
+
+</div>
+
+    
+    <p class="small">
+    
+        © Copyright 2022 ZhuoY Li
+    
+    </p>
+</footer>
+
+    </section>
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+<script src="https://lzy175.github.io/js/main.js"></script>
+<script src="https://lzy175.github.io/js/highlight.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+
+
+</body>
+</html>

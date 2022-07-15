@@ -6,7 +6,58 @@
     <description>Recent content on Hugo Cactus Theme</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Sun, 12 Sep 2021 11:45:13 +0800</lastBuildDate><atom:link href="https://lzy175.github.io/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Fri, 18 Mar 2022 16:49:17 +0800</lastBuildDate><atom:link href="https://lzy175.github.io/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>有关单例模式和代理模式的学习</title>
+      <link>https://lzy175.github.io/posts/%E6%9C%89%E5%85%B3%E5%8D%95%E4%BE%8B%E6%A8%A1%E5%BC%8F%E5%92%8C%E4%BB%A3%E7%90%86%E6%A8%A1%E5%BC%8F%E7%9A%84%E5%AD%A6%E4%B9%A0/</link>
+      <pubDate>Fri, 18 Mar 2022 16:49:17 +0800</pubDate>
+      
+      <guid>https://lzy175.github.io/posts/%E6%9C%89%E5%85%B3%E5%8D%95%E4%BE%8B%E6%A8%A1%E5%BC%8F%E5%92%8C%E4%BB%A3%E7%90%86%E6%A8%A1%E5%BC%8F%E7%9A%84%E5%AD%A6%E4%B9%A0/</guid>
+      <description>单例模式 一个类只有一个实例，精髓在于构造方法私有化。
+饿汉式单例：
+public class study{ private static study s = new study(); private study(){ } public static study get(){ return s; } } 饱汉式单例：
+public class study{ private static study s; private study(){ } private synchronized static study get(){ if(s == null){ return new study(); } return s; } } 双重检验锁方式实现单例模式：
+为了解决同步和性能问题：
+public class Student{ private static volatile Student student; private Student(){} public static Student get(){ if(student == null){ synchronized(Student.</description>
+    </item>
+    
+    <item>
+      <title>JDBC对双亲委派模型的破坏分析</title>
+      <link>https://lzy175.github.io/posts/jdbc%E5%AF%B9%E5%8F%8C%E4%BA%B2%E5%A7%94%E6%B4%BE%E6%A8%A1%E5%9E%8B%E7%9A%84%E7%A0%B4%E5%9D%8F%E5%88%86%E6%9E%90/</link>
+      <pubDate>Tue, 15 Mar 2022 10:10:16 +0800</pubDate>
+      
+      <guid>https://lzy175.github.io/posts/jdbc%E5%AF%B9%E5%8F%8C%E4%BA%B2%E5%A7%94%E6%B4%BE%E6%A8%A1%E5%9E%8B%E7%9A%84%E7%A0%B4%E5%9D%8F%E5%88%86%E6%9E%90/</guid>
+      <description>类加载器 通过类的全限定名获取类的二进制文件流。是对类进行解析的重要工具。
+类加载器有三种，依次是启动类加载器（bootstrapClassLoader），扩展类加载器，和应用程序类加载器（AppclassLoader).
+启动类加载器负责加载java的核心类库，比如rt.jar这种；
+扩展类加载器，一般是在扩展目录下加载类库，\lib\ext目录或者java.ext.dirs系统变量指定的路径中的所有目录；
+应用程序类加载器负责加载环境变量classPath或者java.class.path指定路径下的类库。是应用程序中默认的类加载器。
+双亲委派的具体内容就是：
+一个类加载器在加载某一个类的时候，首先委派给他的父类加载器去加载，依次递归，所以所有的加载请求其实都会汇聚到启动类加载器里面，如果父类加载器可以完成这个类的加载，那么就成功返回，如果加载不了，再由子类加载器进行加载。
+代码角度分析类加载的过程如下：
+public Class&amp;lt;?&amp;gt; loadClass(String name) throws ClassNotFoundException { return loadClass(name, false); } protected synchronized Class&amp;lt;?&amp;gt; loadClass(String name, boolean resolve) throws ClassNotFoundException { // 首先判断该类型是否已经被加载 Class c = findLoadedClass(name); if (c == null) { //如果没有被加载，就委托给父类加载或者委派给启动类加载器加载 try { if (parent != null) { //如果存在父类加载器，就委派给父类加载器加载 c = parent.loadClass(name, false); } else { // 递归终止条件 // 由于启动类加载器无法被Java程序直接引用，因此默认用 null 替代 // parent == null就意味着由启动类加载器尝试加载该类， // 即通过调用 native方法 findBootstrapClass0(String name)加载 c = findBootstrapClass0(name); } } catch (ClassNotFoundException e) { // 如果父类加载器不能完成加载请求时，再调用自身的findClass方法进行类加载，若加载成功，findClass方法返回的是defineClass方法的返回值 // 注意，若自身也加载不了，会产生ClassNotFoundException异常并向上抛出 c = findClass(name); } } //是否需要连接该类 if (resolve) { resolveClass(c); } return c; } 双亲委派的意义：</description>
+    </item>
+    
+    <item>
+      <title>Spring中bean生命周期源码的了解</title>
+      <link>https://lzy175.github.io/posts/spring%E4%B8%ADbean%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F%E6%BA%90%E7%A0%81%E7%9A%84%E4%BA%86%E8%A7%A3/</link>
+      <pubDate>Sat, 15 Jan 2022 16:44:29 +0800</pubDate>
+      
+      <guid>https://lzy175.github.io/posts/spring%E4%B8%ADbean%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F%E6%BA%90%E7%A0%81%E7%9A%84%E4%BA%86%E8%A7%A3/</guid>
+      <description>Spring中bean的生命周期
+1、实例化
+2、填充属性
+3、执行aware接口实现的方法
+aware接口存在的意义：方便通过Spring中的bean对象来获取对应容器中的相关属性值。
+4、BeanPostProcessor.before (bean扩展)
+5、init-method方法
+6、BeanPostProcessor.after（bean扩展）
+得到完整对象
+7、销毁流程
+debug流程，以xml配置文件方式进行debug：
+@SpringBootApplication //对应到mappers包 @MapperScan(&amp;#34;com.example.seckill.db.mappers&amp;#34;) @ComponentScan(basePackages = {&amp;#34;com.example&amp;#34;}) public class SckillApplication { public static void main(String[] args) { SpringApplication.run(SckillApplication.class, args); AnnotationConfigApplicationContext annotationConfigApplicationContext; //配置文件 ClassPathXmlApplicationContext classPathXmlApplicationContext; } } public ClassPathXmlApplicationContext(String[] configLocations, boolean refresh, @Nullable ApplicationContext parent) throws BeansException { //执行父类的构造方法 super(parent); //设置配置路径 this.setConfigLocations(configLocations); //refrash 超级重要 if (refresh) { this.refresh(); } } //AbstractApplicationContext类 public void refresh() throws BeansException, IllegalStateException { synchronized(this.startupShutdownMonitor) { StartupStep contextRefresh = this.</description>
+    </item>
+    
     <item>
       <title>AQS源码初探</title>
       <link>https://lzy175.github.io/posts/aqs%E6%BA%90%E7%A0%81%E5%88%9D%E6%8E%A2/</link>
@@ -20,6 +71,48 @@ CountdownLatch底层的state表示需要countdown的次数。
 //进入到ReentrantLock的内部类NonfairSync 中的lock()方法 // 使用 CAS 来获取 state 资源，如果成功设置 1，代表 state 资源获取锁成功， // 此时记录下当前占用 state 的线程 setExclusiveOwnerThread(Thread.currentThread()); // 如果 CAS 设置 state 为 1 失败（代表获取锁失败），则执行 acquire(1) 方法，再次尝试 final void lock() { if (compareAndSetState(0, 1)) setExclusiveOwnerThread(Thread.currentThread()); else acquire(1); } 使用acquire（）方法获取锁，这是个核心方法：
 //这里是获取锁的acquire(1)方法 //首先 调用 tryAcquire 尝试着获取 state，如果成功，则跳过后面的步骤。如果失败，则执行 //acquireQueued 将线程加入 CLH 等待队列中 public final void acquire(int arg) { if (!tryAcquire(arg) &amp;amp;&amp;amp; //在CLH等待队列中的线程处于一种”自旋状态“，尝试让该线程重新获取锁 acquireQueued(addWaiter(Node.EXCLUSIVE), arg)) selfInterrupt(); } tryAcquire（）方法并没有在AQS中直接实现，而是采用模板方法的设计模式，交给子类去实现，其中公平锁的实现如下：
 protected final boolean tryAcquire(int acquires) { // 当前线程 final Thread current = Thread.</description>
+    </item>
+    
+    <item>
+      <title>Redis实现分布式锁与其他实现方案</title>
+      <link>https://lzy175.github.io/posts/redis%E5%AE%9E%E7%8E%B0%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81%E4%B8%8E%E5%85%B6%E4%BB%96%E5%AE%9E%E7%8E%B0%E6%96%B9%E6%A1%88/</link>
+      <pubDate>Wed, 25 Aug 2021 17:24:33 +0800</pubDate>
+      
+      <guid>https://lzy175.github.io/posts/redis%E5%AE%9E%E7%8E%B0%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81%E4%B8%8E%E5%85%B6%E4%BB%96%E5%AE%9E%E7%8E%B0%E6%96%B9%E6%A1%88/</guid>
+      <description>分布式系统确实能带来性能和效率上的提升，目前单机的局限越来越大，大多数互联网系统都是分布式部署的，但为此，我们就需要多解决一个分布式环境下，数据一致性的问题，这里有个很重要的CAP理论。
+CAP理论是在设计分布式系统的过程中，处理数据一致性问题时必须考虑的理论，而CAP理论说的就是：一个分布式系统，不可能同时做到这三点C、A、P。
+CAP即：
+Consistency（一致性） Availability（可用性） Partition tolerance（分区容忍性） 翻译一下就是： ①**一致性：**对于客户端的每次读操作，要么读到的是最新的数据，要么读取失败。换句话说，一致性是站在分布式系统的角度，对访问本系统的客户端的一种承诺：要么我给您返回一个错误，要么我给你返回绝对一致的最新数据，不难看出，其强调的是数据正确。
+②**可用性：**任何客户端的请求都能得到响应数据，不会出现响应错误。换句话说，可用性是站在分布式系统的角度，对访问本系统的客户的另一种承诺：我一定会给您返回数据，不会给你返回错误，但不保证数据最新，强调的是不出错。
+③**分区容忍性：**由于分布式系统通过网络进行通信，网络是不可靠的。当任意数量的消息丢失或延迟到达时，系统仍会继续提供服务，不会挂掉。换句话说，分区容忍性是站在分布式系统的角度，对访问本系统的客户端的再一种承诺：我会一直运行，不管我的内部出现何种数据同步问题，强调的是不挂掉。
+谈回分布式，当某个资源在多系统之间，具有共享性的时候，为了保证大家访问这个资源数据是一致的，那么就必须要求在同一时刻只能被一个客户端处理，不能并发的执行，否者就会出现同一时刻有人写有人读，大家访问到的数据就不一致了。
+在单机时代，虽然不需要分布式锁，但也面临过类似的问题，只不过在单机的情况下，如果有多个线程要同时访问某个共享资源的时候，我们可以采用线程间加锁的机制，即当某个线程获取到这个资源后，就立即对这个资源进行加锁，当使用完资源之后，再解锁，其它线程就可以接着使用了。例如，在JAVA中，甚至专门提供了一些处理锁机制的一些API（synchronize/Lock等）。
+但是到了分布式系统的时代，这种线程之间的锁机制，就没作用了，系统可能会有多份并且部署在不同的机器上，这些资源已经不是在线程之间共享了，而是属于进程之间共享的资源。
+因此，为了解决这个问题，就必须引入「分布式锁」。
+分布式锁，是指在分布式的部署环境下，通过锁机制来让多客户端互斥的对共享资源进行访问。
+分布式锁要要求：
+排他性：在同一时间只会有一个客户端能获取到锁，其它客户端无法同时获取； 避免死锁：这把锁在一段有限的时间之后，一定会被释放（正常释放或异常释放）； 高可用：获取或释放锁的机制必须高可用且性能佳。 目前主流的有三种，从实现的复杂度上来看，从上往下难度依次增加：
+基于数据库实现 基于Redis实现 基于ZooKeeper实现 接下来着重介绍下基于redis的分布式锁实现：
+使用SETNX实现
+SETNX的使用方式为：SETNX key value，只在键key不存在的情况下，将键key的值设置为value，若键key存在，则SETNX不做任何动作。
+boolean result = jedis.setnx(&amp;#34;lock-key&amp;#34;,true)== 1L; if (result) { try { // do something } finally { jedis.del(&amp;#34;lock-key&amp;#34;); } } 这种方案有一个致命问题，就是某个线程在获取锁之后由于某些异常因素（比如宕机）而不能正常的执行解锁操作，那么这个锁就永远释放不掉了。
+为此，我们可以为这个锁加上一个超时时间
+执行 SET key value EX seconds 的效果等同于执行 SETEX key seconds value
+执行 SET key value PX milliseconds 的效果等同于执行 PSETEX key milliseconds value</description>
+    </item>
+    
+    <item>
+      <title>对于redis实际操作的学习</title>
+      <link>https://lzy175.github.io/posts/%E5%AF%B9%E4%BA%8Eredis%E5%AE%9E%E9%99%85%E6%93%8D%E4%BD%9C%E7%9A%84%E5%AD%A6%E4%B9%A0/</link>
+      <pubDate>Thu, 29 Jul 2021 16:56:09 +0800</pubDate>
+      
+      <guid>https://lzy175.github.io/posts/%E5%AF%B9%E4%BA%8Eredis%E5%AE%9E%E9%99%85%E6%93%8D%E4%BD%9C%E7%9A%84%E5%AD%A6%E4%B9%A0/</guid>
+      <description>本篇博客仅记录笔者操作过程中使用到的命令，对于理论知识比如redis五大数据类型的底层结构，redis单线程相关知识，redis持久化等等知识点不做详解，有兴趣的读者可自行百度或者查看笔者的其他相关博客。
+redis存储的是：key,value格式的数据，其中key都是字符串，value有5种不同的数据结构：
+String类型 string是redis最基本的类型，你可以理解成与Memcached一模一样的类型，一个key对应一个value； string类型是二进制安全的。意思是redis的string可以包含任何数据。如jpg图片或者序列化的对象 ； string类型是Redis最基本的数据类型，一个redis中字符串value最多可以是512M；
+常用命令操作：
+SET key value（存储：将字符串值 value 关联到 key） GET key（获取：返回与键 key 相关联的字符串值） DEL key（删除：删除给定的 key ） APPEND key value（ APPEND 命令将把 value 追加到键 key 现有值的末尾，没有 key 就自动添加） STRLEN key（返回键 key 储存的字符串值的长度） 哈希类型 hash ： (map格式) redis的hash 是一个键值对集合； redis hash是一个string类型的field和value的映射表，hash特别适合用于存储对象； 类似Java里面的Map&amp;lt;String,Object&amp;gt;； 常用命令操作：
+HSET key field value（存储：将哈希表 hash 中域 field 的值设置为 value） HGET key field（获取：获取指定的field对应的值） HDEL key field（删除：删除哈希表 key 中的一个或多个指定域，不存在的域将被忽略） HMSET key field value [field value …]（同时将多个 field-value (域-值)对设置到哈希表 key 中） HMGET key field [field …]（返回哈希表 key 中，一个或多个给定域的值） HGETALL key（返回哈希表 key 中，所有的域和值） 列表类型 list ：（linkedlist格式。支持重复元素） redis 列表是简单的字符串列表，按照插入顺序排序。你可以添加一个元素导列表的头部（左边）或者尾部（右边）。它的底层实际是个链表。 常用命令操作：</description>
     </item>
     
     <item>
@@ -58,6 +151,54 @@ jdk的epoll空轮询bug 使用IO复用，Linux下一般默认就是epoll，Java 
 使用计算机的不同端口，可以编写一个IO通信的简单Demo。
 客户端代码
 package com.lzy.socketDemo; import com.sun.org.apache.xpath.internal.objects.XString; import java.io.*; import java.net.Inet4Address; import java.net.InetSocketAddress; import java.net.Socket; import java.net.UnknownHostException; /** * @ClassName: Client * @Description: socket客户端 * @author: lzy * @date: 2022/7/11 11:07 */ public class Client { public static void main(String[] args) throws IOException { Socket socket = new Socket(); // 设置超时时间 socket.setSoTimeout(8000); socket.connect(new InetSocketAddress(Inet4Address.getLocalHost(), 2000), 8000); System.out.println(&amp;#34;已发起服务器连接，并进入后续流程～&amp;#34;); System.out.println(&amp;#34;客户端信息：&amp;#34; + socket.getLocalAddress() + &amp;#34; P:&amp;#34; + socket.</description>
+    </item>
+    
+    <item>
+      <title>三种时间复杂度为logn的排序算法</title>
+      <link>https://lzy175.github.io/posts/%E4%B8%89%E7%A7%8D%E6%97%B6%E9%97%B4%E5%A4%8D%E6%9D%82%E5%BA%A6%E4%B8%BAlogn%E7%9A%84%E6%8E%92%E5%BA%8F%E7%AE%97%E6%B3%95/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://lzy175.github.io/posts/%E4%B8%89%E7%A7%8D%E6%97%B6%E9%97%B4%E5%A4%8D%E6%9D%82%E5%BA%A6%E4%B8%BAlogn%E7%9A%84%E6%8E%92%E5%BA%8F%E7%AE%97%E6%B3%95/</guid>
+      <description>/** * @ClassName: SortInterface * @Description: 排序方法接口，所有排序方法必须实现这一接口 * @author: lzy * @date: 2020/12/12 9:08 */ public interface SortInterface { void sort(int[] nums); } 归并排序，这三个排序算法中唯一一个稳定的：
+/** * @ClassName: MergeSort * @Description: 归并排序 * @author: lzy * @date: 2020/12/12 9:55 */ public class MergeSort implements SortInterface{ @Override public void sort(int[] nums) { Merge(nums, 0 , nums.length-1); } public void Merge(int[] nums , int left , int right){ if(left &amp;gt;= right){ return; } int index = (left + right)/2; Merge(nums , left , index); Merge(nums, index+1, right); MergeNums(nums , left , index , right); } public void MergeNums(int[] nums , int left , int index , int right){ int[] tmp = new int[right - left + 1]; int i = left; int j = index+1; int k = 0; while(i &amp;lt;= index &amp;amp;&amp;amp; j &amp;lt;= right){ if(nums[i] &amp;gt; nums[j]){ tmp[k++] = nums[j++]; }else { tmp[k++] = nums[i++]; } } while(i &amp;lt;= index){ tmp[k++] = nums[i++]; } while(j &amp;lt;= right){ tmp[k++] = nums[j++]; } //将tmp复制到nums中 for(int l = left ; l &amp;lt;= right ; l++){ nums[l] = tmp[l-left]; } } } 快排：</description>
+    </item>
+    
+    <item>
+      <title>对于RPC框架的初步理解</title>
+      <link>https://lzy175.github.io/posts/%E5%AF%B9%E4%BA%8Erpc%E6%A1%86%E6%9E%B6%E7%9A%84%E5%88%9D%E6%AD%A5%E7%90%86%E8%A7%A3/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://lzy175.github.io/posts/%E5%AF%B9%E4%BA%8Erpc%E6%A1%86%E6%9E%B6%E7%9A%84%E5%88%9D%E6%AD%A5%E7%90%86%E8%A7%A3/</guid>
+      <description>rpc是指远程过程调用，关注的一般是远程方法调用，微服务会将一个项目服务分成几个规模较小的服务，把这些服务分别部署在不同的服务器中，来达到一种解耦合提高效率的目的，但是不同的服务之间一定会有交互，通过这种交互来完成系统的整体性，这种交互过程有时候就是一个服务得区调用另一个服务的方法，就是在一台服务器上，调用另一台服务器的某个方法，RPC就是这样一种框架，通过RPC可以在本地计算机上调用远程计算机上某个服务的方法。
+RPC通常包括两类协议：1、传输协议和 序列化协议
+传输协议：
+著名的grpc，底层使用的就是http2协议；dubbo一类的是使用自定义报文的tcp协议。
+序列化协议
+基于文本编码的josn协议；二进制编码的protobuf、hession协议；针对java高性能高吞吐量的kryo和ftc协议。
+既然有HTTP，为啥还要用RPC进行服务调用？
+他们俩到底是哪里有差别？
+五层协议体系：应用层，传输层，网络层，数据链路层，物理层。
+应用层的任务是通过应用进程之间的交互来完成特定的网络应用。http就是应用层协议，使用TCP/IP通信协议来传递数据。
+传输层的主要任务就是为两台主机之间的通信提供通用的数据传输服务。TCP就是传输层协议。
+关键的差别就在于HTTP使用的TCP协议，RPC网络使用的自定义报文的TCP协议：
+http1.1协议的TCP报文包含太多在传输过程中可能无用的信息，使用自定的报文进行传输就会避免这个问题，极大减轻了数据传输的开销。在这点上RPC直接是提高了信息交换效率。除此之外，RPC框架还提供了&amp;quot;服务自动注册与发现&amp;quot;、“智能负载均衡”，“可视化的服务治理和运维”，“运行期流量调度”等功能。
+RPC框架的基本架构部件是三个，注册中心、客户端和服务端：
+三者交互方式：
+1、服务端启动后，会将他提供的服务列表发布到注册中心，客户端向注册中心订阅服务地址；
+2、客户端会通过本地代理模块Proxy调用服务端，Proxy模块负责将方法。参数等数据转化为网络字节流；
+3、客户端从服务列表选取其中一个服务地址（通过负载均衡算法），并将数据通过网络发送给服务端；
+4、服务端收到数据后进行解码，得到请求信息；
+5、服务端根据解码后的请求信息调用对应的服务，然后将调用结果返回给客户端。
+交互过程：
+1、客户端（client）以本地调用方式调用服务；
+2、client stub接受到调用后负责将方法、参数封装成能够进行网络传输的消息体；
+3、client stub将消息进行编码并发送到服务端；
+4、server stub收到消息后进行解码；
+5、server stub根据解码结果调用本地服务；
+6、本地服务执行方法并将结果返回给server stub；
+7、server stub将返回结果进行编码并发送给消费方；
+8、client stub接受消息进行解码；
+9、服务消费方（client）得到结果。</description>
     </item>
     
   </channel>
