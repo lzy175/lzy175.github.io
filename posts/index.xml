@@ -102,6 +102,19 @@ boolean result = jedis.setnx(&amp;#34;lock-key&amp;#34;,true)== 1L; if (result) 
     </item>
     
     <item>
+      <title>手写RPC---负载均衡</title>
+      <link>https://lzy175.github.io/posts/%E6%89%8B%E5%86%99rpc%E5%85%AD/</link>
+      <pubDate>Fri, 30 Jul 2021 17:42:29 +0800</pubDate>
+      
+      <guid>https://lzy175.github.io/posts/%E6%89%8B%E5%86%99rpc%E5%85%AD/</guid>
+      <description>项目实现了两个负载均衡算法，随机负载均衡和轮询负载均衡
+使用的步骤：
+首先，消费的实现已经创建了动态代理实现，所以真的调用方法在动态代理的invoke里面，
+invoke的第一步就调用了discoverService.discovery方法，目的是根据服务名称和版本号找到zk中哪些服务端有这个服务。代码如下：
+package com.rrtv.rpc.core.discovery; /** * @Classname ZookeeperRegistryService * @Description * @Date 2021/7/15 14:35 */ @Slf4j public class ZookeeperDiscoveryService implements DiscoveryService { public static final int BASE_SLEEP_TIME_MS = 1000; public static final int MAX_RETRIES = 3; public static final String ZK_BASE_PATH = &amp;#34;/demo_rpc&amp;#34;; private ServiceDiscovery&amp;lt;ServiceInfo&amp;gt; serviceDiscovery; private LoadBalance loadBalance; //构造方法，输入为负载均衡策略 和zk的地址 public ZookeeperDiscoveryService(String registryAddr, LoadBalance loadBalance) { this.loadBalance = loadBalance; try { //zookeeper的东西，使用静态工程方法创建客户端，registryAddr是服务器列表 CuratorFramework client = CuratorFrameworkFactory.newClient(registryAddr, new ExponentialBackoffRetry(BASE_SLEEP_TIME_MS, MAX_RETRIES)); //zk客户端启动 client.</description>
+    </item>
+    
+    <item>
       <title>对于redis实际操作的学习</title>
       <link>https://lzy175.github.io/posts/%E5%AF%B9%E4%BA%8Eredis%E5%AE%9E%E9%99%85%E6%93%8D%E4%BD%9C%E7%9A%84%E5%AD%A6%E4%B9%A0/</link>
       <pubDate>Thu, 29 Jul 2021 16:56:09 +0800</pubDate>
@@ -113,6 +126,68 @@ String类型 string是redis最基本的类型，你可以理解成与Memcached�
 常用命令操作：
 SET key value（存储：将字符串值 value 关联到 key） GET key（获取：返回与键 key 相关联的字符串值） DEL key（删除：删除给定的 key ） APPEND key value（ APPEND 命令将把 value 追加到键 key 现有值的末尾，没有 key 就自动添加） STRLEN key（返回键 key 储存的字符串值的长度） 哈希类型 hash ： (map格式) redis的hash 是一个键值对集合； redis hash是一个string类型的field和value的映射表，hash特别适合用于存储对象； 类似Java里面的Map&amp;lt;String,Object&amp;gt;； 常用命令操作：
 HSET key field value（存储：将哈希表 hash 中域 field 的值设置为 value） HGET key field（获取：获取指定的field对应的值） HDEL key field（删除：删除哈希表 key 中的一个或多个指定域，不存在的域将被忽略） HMSET key field value [field value …]（同时将多个 field-value (域-值)对设置到哈希表 key 中） HMGET key field [field …]（返回哈希表 key 中，一个或多个给定域的值） HGETALL key（返回哈希表 key 中，所有的域和值） 列表类型 list ：（linkedlist格式。支持重复元素） redis 列表是简单的字符串列表，按照插入顺序排序。你可以添加一个元素导列表的头部（左边）或者尾部（右边）。它的底层实际是个链表。 常用命令操作：</description>
+    </item>
+    
+    <item>
+      <title>手写RPC---服务的发布与消费</title>
+      <link>https://lzy175.github.io/posts/%E6%89%8B%E5%86%99rpc%E4%BA%94/</link>
+      <pubDate>Wed, 28 Jul 2021 17:15:26 +0800</pubDate>
+      
+      <guid>https://lzy175.github.io/posts/%E6%89%8B%E5%86%99rpc%E4%BA%94/</guid>
+      <description>发布服务 HelloWordServiceImpl方法：
+@RpcService(interfaceType = HelloWordService.class, version = &amp;#34;1.0&amp;#34;) public class HelloWordServiceImpl implements HelloWordService { @Override public String sayHello(String name) { return String.format(&amp;#34;您好：%s, rpc 调用成功&amp;#34;, name); } } 服务提供者需要在暴露的服务上增加注解@RpcService，这个自定义注解基于@Service，是一个复合注解，在@RpcService注解中指明服务接口和服务版本，发布服务到ZK上，会根据这两个元数据注册。
+@RpcService
+@Target({ElementType.TYPE}) @Retention(RetentionPolicy.RUNTIME) @Documented @Service public @interface RpcService { /** * 暴露服务接口类型 * @return */ Class&amp;lt;?&amp;gt; interfaceType() default Object.class; /** * 服务版本 * @return */ String version() default &amp;#34;1.0&amp;#34;; } rpc-server-spring-boot-starter是服务提供者模块，RpcServerProvider实现了BeanPostProcessor接口（Spring的一个重要扩展点）和CommandLineRunner接口。
+BeanPostProcessor接口包含了两个方法：
+postProcessBeforeInitialization（）方法：在bean实例化、属性注入后，初始化前调用。
+postProcessAfterInitialization（）方法：在bean实例化、属性注入，初始化都完成后调用。
+CommandLineRunner接口只包含一个方法：
+run（）方法：项目启动之后，立即执行的操作
+package com.rrtv.rpc.server; import com.rrtv.rpc.core.common.ServiceInfo; import com.rrtv.rpc.core.common.ServiceUtil; import com.</description>
+    </item>
+    
+    <item>
+      <title>手写RPC---序列化和反序列化</title>
+      <link>https://lzy175.github.io/posts/%E6%89%8B%E5%86%99rpc%E5%9B%9B/</link>
+      <pubDate>Sun, 25 Jul 2021 16:45:19 +0800</pubDate>
+      
+      <guid>https://lzy175.github.io/posts/%E6%89%8B%E5%86%99rpc%E5%9B%9B/</guid>
+      <description>在encode的代码里，记录真正消息的body时，是将messageProtocol中的body（就是RpcRequest ）先序列化，然后再写入的。要用到序列化技术，注意只有实现了Serializable接口的类才能序列化。
+项目目前实现了Hession序列化和Json序列化。具体的序列化方式在消息头部声明。
+RpcSerialization 序列化接口：
+package com.rrtv.rpc.core.serialization; import java.io.IOException; /** * @Author: lzy * @Date: 2021/7/14 13:36 */ public interface RpcSerialization { &amp;lt;T&amp;gt; byte[] serialize(T obj) throws IOException; &amp;lt;T&amp;gt; T deserialize(byte[] data, Class&amp;lt;T&amp;gt; clz) throws IOException; } json序列化（一下代码参考互联网，笔者对序列化技术的实际操作有点弱）：
+package com.rrtv.rpc.core.serialization; import com.fasterxml.jackson.annotation.JsonInclude; import com.fasterxml.jackson.databind.DeserializationFeature; import com.fasterxml.jackson.databind.ObjectMapper; import java.io.IOException; import java.nio.charset.StandardCharsets; import java.text.SimpleDateFormat; import java.util.Arrays; /** * @Author: lzy * @Date: 2021/7/14 13:36 */ public class JsonSerialization implements RpcSerialization { private static final ObjectMapper MAPPER; static { MAPPER = generateMapper(JsonInclude.</description>
+    </item>
+    
+    <item>
+      <title>手写RPC---自定义的消息协议和编解码方式</title>
+      <link>https://lzy175.github.io/posts/%E6%89%8B%E5%86%99rpc%E4%B8%89/</link>
+      <pubDate>Fri, 23 Jul 2021 15:37:50 +0800</pubDate>
+      
+      <guid>https://lzy175.github.io/posts/%E6%89%8B%E5%86%99rpc%E4%B8%89/</guid>
+      <description>自定义协议这部分很灵活其实，笔者在网上看到了很多的自定义消息协议，根据目的和应用场景的不同出入也很大，笔者这里参考了网上的一些写法，又加了自己认为比较有必要的一些东西，仅供参考，如果读者有更好的想法或者意见，欢迎讨论，技术是在讨论中不断进步的。
+MessageProtocol，包括了两部分，消息头和消息体：
+package com.rrtv.rpc.core.protocol; import lombok.Data; import java.io.Serializable; /** * @Classname MessageProtocol * @Description 消息协议 * @Date 2021/7/13 15:33 * @Created by lzy */ @Data public class MessageProtocol&amp;lt;T&amp;gt; implements Serializable { /** * 消息头 */ private MessageHeader header; /** * 消息体，消息体分为两种，reponse和request，这里以泛型表示 */ private T body; } request消息体：
+package com.rrtv.rpc.core.common; import lombok.Data; import java.io.Serializable; /** * @Author: lzy * @Date: 2021/7/13 22:55 */ @Data public class RpcRequest implements Serializable { /** * 请求的服务名 + 版本 */ private String serviceName; /** * 请求调用的方法 */ private String method; /** * 参数类型 */ private Class&amp;lt;?</description>
+    </item>
+    
+    <item>
+      <title>手写RPC---整体框架的构建</title>
+      <link>https://lzy175.github.io/posts/%E6%89%8B%E5%86%99rpc%E4%BA%8C/</link>
+      <pubDate>Tue, 20 Jul 2021 15:10:38 +0800</pubDate>
+      
+      <guid>https://lzy175.github.io/posts/%E6%89%8B%E5%86%99rpc%E4%BA%8C/</guid>
+      <description>RPC的基础功能之一就是对服务端相应功能的注册与发现，在本项目中使用zookeeper作为注册中心，目前未提供切换以及用户自定义注册中心的功能。
+IO通信框架选择NEtty作为底层的通信框架，没有选择java自己的NIO接口（一是接口众多，实现起来不够简便；二是那个epoll空轮询bug），不支持用户自定义的通信框架。
+消息协议，本实现使用自定义的消息协议，后面会具体说明。
+项目总体结构： consumer模块：服务消费者；
+provider模块：服务提供者；
+provider-api模块：服务提供者暴露的服务API；
+rpc-client-spring-boot-starter模块：客户端的starter，封装客户端发起的请求过程（jdk动态代理，网络通信）；
+rpc-core模块：RPC的核心依赖，负载均衡策略，消息协议，协议编解码，序列化，请求响应实体、服务注册发现；
+rpc-server-spring-boot-starter模块：服务端端的starter，负责发布RPC服务，接收和处理RPC请求，反射调用服务端。
+这里的starter意图是尽量减少相关配置，有兴趣的读者可以直接去了解一下Spring boot的自动装配，这个starter的原理是spring boot对spring 框架的重要简化手段之一。大体上讲就是：spring boot启动时，会自动加载maven依赖MATE-INF文件夹下面的spring.factories文件，只要在该文件中指向一个配置文件，只要在该文件中配置一些需要的bean，依赖此模块项目会自动拿到这些bean ，并配置到自己的spring容器中。
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=com.rrtv.rpc.client.config.RpcClientAutoConfiguration </description>
     </item>
     
     <item>
@@ -242,6 +317,17 @@ RPC框架的基本架构部件是三个，注册中心、客户端和服务端�
 7、server stub将返回结果进行编码并发送给消费方；
 8、client stub接受消息进行解码；
 9、服务消费方（client）得到结果。</description>
+    </item>
+    
+    <item>
+      <title>手写RPC---网络传输</title>
+      <link>https://lzy175.github.io/posts/%E6%89%8B%E5%86%99rpc%E4%B8%83/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://lzy175.github.io/posts/%E6%89%8B%E5%86%99rpc%E4%B8%83/</guid>
+      <description>网络传输部分使用netty，这部分就是将先前的代码整合，作为handler，处理完毕后在网络中传输。
+服务端接收和发送：
+package com.rrtv.rpc.server.transport; import java.net.InetAddress; /** * @Date: 2021/7/24 22:22 */ @Slf4j public class NettyRpcServer implements RpcServer { //开启服务 @Override public void start(int port) { //监听端口 EventLoopGroup boss = new NioEventLoopGroup(); //这个是用来处理工作的 EventLoopGroup worker = new NioEventLoopGroup(); try { String serverAddress = InetAddress.getLocalHost().getHostAddress(); ServerBootstrap bootstrap = new ServerBootstrap(); bootstrap.group(boss, worker) .channel(NioServerSocketChannel.class) .childHandler(new ChannelInitializer&amp;lt;SocketChannel&amp;gt;() { @Override protected void initChannel(SocketChannel socketChannel) throws Exception { socketChannel.pipeline() // 协议编码 .addLast(new RpcEncoder()) // 协议解码 .</description>
     </item>
     
   </channel>

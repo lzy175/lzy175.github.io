@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en-us">
+	<head>
+    <meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="author" content="ZhuoY Li">
+<meta name="description" content="It&#39;s never too late to learn.">
+<meta name="generator" content="Hugo 0.101.0" />
+<title>手写RPC---服务的发布与消费</title>
+<link rel="shortcut icon" href="https://lzy175.github.io/images/favicon.ico">
+<link rel="stylesheet" href="https://lzy175.github.io/css/style.css">
+<link rel="stylesheet" href="https://lzy175.github.io/css/highlight.css">
+
+
+
+<link rel="stylesheet" href="https://lzy175.github.io/css/monosocialiconsfont.css">
+
+
+
+<link href="https://lzy175.github.io/index.xml" rel="alternate" type="application/rss+xml" title="Hugo Cactus Theme" />
+
+
+<meta property="og:title" content="手写RPC---服务的发布与消费" />
+<meta property="og:description" content="发布服务 HelloWordServiceImpl方法：
+@RpcService(interfaceType = HelloWordService.class, version = &#34;1.0&#34;) public class HelloWordServiceImpl implements HelloWordService { @Override public String sayHello(String name) { return String.format(&#34;您好：%s, rpc 调用成功&#34;, name); } } 服务提供者需要在暴露的服务上增加注解@RpcService，这个自定义注解基于@Service，是一个复合注解，在@RpcService注解中指明服务接口和服务版本，发布服务到ZK上，会根据这两个元数据注册。
+@RpcService
+@Target({ElementType.TYPE}) @Retention(RetentionPolicy.RUNTIME) @Documented @Service public @interface RpcService { /** * 暴露服务接口类型 * @return */ Class&lt;?&gt; interfaceType() default Object.class; /** * 服务版本 * @return */ String version() default &#34;1.0&#34;; } rpc-server-spring-boot-starter是服务提供者模块，RpcServerProvider实现了BeanPostProcessor接口（Spring的一个重要扩展点）和CommandLineRunner接口。
+BeanPostProcessor接口包含了两个方法：
+postProcessBeforeInitialization（）方法：在bean实例化、属性注入后，初始化前调用。
+postProcessAfterInitialization（）方法：在bean实例化、属性注入，初始化都完成后调用。
+CommandLineRunner接口只包含一个方法：
+run（）方法：项目启动之后，立即执行的操作
+package com.rrtv.rpc.server; import com.rrtv.rpc.core.common.ServiceInfo; import com.rrtv.rpc.core.common.ServiceUtil; import com." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://lzy175.github.io/posts/%E6%89%8B%E5%86%99rpc%E4%BA%94/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2021-07-28T17:15:26+08:00" />
+<meta property="article:modified_time" content="2021-07-28T17:15:26+08:00" />
+
+
+
+<meta itemprop="name" content="手写RPC---服务的发布与消费">
+<meta itemprop="description" content="发布服务 HelloWordServiceImpl方法：
+@RpcService(interfaceType = HelloWordService.class, version = &#34;1.0&#34;) public class HelloWordServiceImpl implements HelloWordService { @Override public String sayHello(String name) { return String.format(&#34;您好：%s, rpc 调用成功&#34;, name); } } 服务提供者需要在暴露的服务上增加注解@RpcService，这个自定义注解基于@Service，是一个复合注解，在@RpcService注解中指明服务接口和服务版本，发布服务到ZK上，会根据这两个元数据注册。
+@RpcService
+@Target({ElementType.TYPE}) @Retention(RetentionPolicy.RUNTIME) @Documented @Service public @interface RpcService { /** * 暴露服务接口类型 * @return */ Class&lt;?&gt; interfaceType() default Object.class; /** * 服务版本 * @return */ String version() default &#34;1.0&#34;; } rpc-server-spring-boot-starter是服务提供者模块，RpcServerProvider实现了BeanPostProcessor接口（Spring的一个重要扩展点）和CommandLineRunner接口。
+BeanPostProcessor接口包含了两个方法：
+postProcessBeforeInitialization（）方法：在bean实例化、属性注入后，初始化前调用。
+postProcessAfterInitialization（）方法：在bean实例化、属性注入，初始化都完成后调用。
+CommandLineRunner接口只包含一个方法：
+run（）方法：项目启动之后，立即执行的操作
+package com.rrtv.rpc.server; import com.rrtv.rpc.core.common.ServiceInfo; import com.rrtv.rpc.core.common.ServiceUtil; import com."><meta itemprop="datePublished" content="2021-07-28T17:15:26+08:00" />
+<meta itemprop="dateModified" content="2021-07-28T17:15:26+08:00" />
+<meta itemprop="wordCount" content="724">
+<meta itemprop="keywords" content="" />
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="手写RPC---服务的发布与消费"/>
+<meta name="twitter:description" content="发布服务 HelloWordServiceImpl方法：
+@RpcService(interfaceType = HelloWordService.class, version = &#34;1.0&#34;) public class HelloWordServiceImpl implements HelloWordService { @Override public String sayHello(String name) { return String.format(&#34;您好：%s, rpc 调用成功&#34;, name); } } 服务提供者需要在暴露的服务上增加注解@RpcService，这个自定义注解基于@Service，是一个复合注解，在@RpcService注解中指明服务接口和服务版本，发布服务到ZK上，会根据这两个元数据注册。
+@RpcService
+@Target({ElementType.TYPE}) @Retention(RetentionPolicy.RUNTIME) @Documented @Service public @interface RpcService { /** * 暴露服务接口类型 * @return */ Class&lt;?&gt; interfaceType() default Object.class; /** * 服务版本 * @return */ String version() default &#34;1.0&#34;; } rpc-server-spring-boot-starter是服务提供者模块，RpcServerProvider实现了BeanPostProcessor接口（Spring的一个重要扩展点）和CommandLineRunner接口。
+BeanPostProcessor接口包含了两个方法：
+postProcessBeforeInitialization（）方法：在bean实例化、属性注入后，初始化前调用。
+postProcessAfterInitialization（）方法：在bean实例化、属性注入，初始化都完成后调用。
+CommandLineRunner接口只包含一个方法：
+run（）方法：项目启动之后，立即执行的操作
+package com.rrtv.rpc.server; import com.rrtv.rpc.core.common.ServiceInfo; import com.rrtv.rpc.core.common.ServiceUtil; import com."/>
+<meta name="twitter:site" content="@https://www.twitter.com/"/>
+
+
+    </head>
+<body>
+    <nav class="main-nav">
+	
+		<a href='https://lzy175.github.io/'> <span class="arrow">←</span>Home</a>
+	
+
+	
+
+	
+		<a class="cta" href="https://lzy175.github.io/index.xml">Subscribe</a>
+	
+</nav>
+
+    <section id="wrapper">
+        
+        
+<article class="post">
+    <header>
+        <h1>手写RPC---服务的发布与消费</h1>
+        <h2 class="subtitle"></h2>
+        <h2 class="headline">
+        July 28, 2021
+        <br>
+        
+        </h2>
+    </header>
+    <section id="post-body">
+        <h2 id="发布服务">发布服务</h2>
+<p><img src="/img/RPC/RPC5/1.png" alt=""></p>
+<p>HelloWordServiceImpl方法：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#a6e22e">@RpcService</span><span style="color:#f92672">(</span>interfaceType <span style="color:#f92672">=</span> HelloWordService<span style="color:#f92672">.</span><span style="color:#a6e22e">class</span><span style="color:#f92672">,</span> version <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;1.0&#34;</span><span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">HelloWordServiceImpl</span> <span style="color:#66d9ef">implements</span> HelloWordService <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">@Override</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> String <span style="color:#a6e22e">sayHello</span><span style="color:#f92672">(</span>String name<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> String<span style="color:#f92672">.</span><span style="color:#a6e22e">format</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;您好：%s, rpc 调用成功&#34;</span><span style="color:#f92672">,</span> name<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span></code></pre></div><p>服务提供者需要在暴露的服务上增加注解@RpcService，这个自定义注解基于@Service，是一个复合注解，在@RpcService注解中指明服务接口和服务版本，发布服务到ZK上，会根据这两个元数据注册。</p>
+<p>@RpcService</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#a6e22e">@Target</span><span style="color:#f92672">({</span>ElementType<span style="color:#f92672">.</span><span style="color:#a6e22e">TYPE</span><span style="color:#f92672">})</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">@Retention</span><span style="color:#f92672">(</span>RetentionPolicy<span style="color:#f92672">.</span><span style="color:#a6e22e">RUNTIME</span><span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">@Documented</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">@Service</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#a6e22e">@interface</span> RpcService <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">/**
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     *  暴露服务接口类型
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * @return
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     */</span>
+</span></span><span style="display:flex;"><span>    Class<span style="color:#f92672">&lt;?&gt;</span> interfaceType<span style="color:#f92672">()</span> <span style="color:#66d9ef">default</span> Object<span style="color:#f92672">.</span><span style="color:#a6e22e">class</span><span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">/**
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     *  服务版本
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * @return
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     */</span>
+</span></span><span style="display:flex;"><span>    String <span style="color:#a6e22e">version</span><span style="color:#f92672">()</span> <span style="color:#66d9ef">default</span> <span style="color:#e6db74">&#34;1.0&#34;</span><span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span></code></pre></div><p>rpc-server-spring-boot-starter是服务提供者模块，RpcServerProvider实现了BeanPostProcessor接口（Spring的一个重要扩展点）和CommandLineRunner接口。</p>
+<p>BeanPostProcessor接口包含了两个方法：</p>
+<p>postProcessBeforeInitialization（）方法：在bean实例化、属性注入后，初始化前调用。</p>
+<p>postProcessAfterInitialization（）方法：在bean实例化、属性注入，初始化都完成后调用。</p>
+<p>CommandLineRunner接口只包含一个方法：</p>
+<p>run（）方法：项目启动之后，立即执行的操作</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#f92672">package</span> com.rrtv.rpc.server<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> com.rrtv.rpc.core.common.ServiceInfo<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> com.rrtv.rpc.core.common.ServiceUtil<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> com.rrtv.rpc.core.register.RegistryService<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> com.rrtv.rpc.server.annotation.RpcService<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> com.rrtv.rpc.server.config.RpcServerProperties<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> com.rrtv.rpc.server.store.LocalServerCache<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> com.rrtv.rpc.server.transport.RpcServer<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> lombok.extern.slf4j.Slf4j<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> org.springframework.beans.BeansException<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> org.springframework.beans.factory.DisposableBean<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> org.springframework.beans.factory.annotation.Autowired<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> org.springframework.beans.factory.config.BeanPostProcessor<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> org.springframework.boot.CommandLineRunner<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> javax.annotation.PreDestroy<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> java.net.InetAddress<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">@Slf4j</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">RpcServerProvider</span> <span style="color:#66d9ef">implements</span> BeanPostProcessor<span style="color:#f92672">,</span> CommandLineRunner <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> RegistryService registryService<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> RpcServerProperties properties<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> RpcServer rpcServer<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> <span style="color:#a6e22e">RpcServerProvider</span><span style="color:#f92672">(</span>RegistryService registryService<span style="color:#f92672">,</span> RpcServer rpcServer<span style="color:#f92672">,</span> RpcServerProperties properties<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">registryService</span> <span style="color:#f92672">=</span> registryService<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">properties</span> <span style="color:#f92672">=</span> properties<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">rpcServer</span> <span style="color:#f92672">=</span> rpcServer<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">/**
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * 所有bean 实例化之后处理
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * &lt;p&gt;
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * 暴露服务注册到注册中心
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * &lt;p&gt;
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * 容器启动后开启netty服务处理请求
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     *
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * @param bean
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * @param beanName
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * @return
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * @throws BeansException
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     */</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">//后置处理器
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#a6e22e">@Override</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> Object <span style="color:#a6e22e">postProcessAfterInitialization</span><span style="color:#f92672">(</span>Object bean<span style="color:#f92672">,</span> String beanName<span style="color:#f92672">)</span> <span style="color:#66d9ef">throws</span> BeansException <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">//通过反射获取，获取被@RpcServcie注解修饰的bean
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        RpcService rpcService <span style="color:#f92672">=</span> bean<span style="color:#f92672">.</span><span style="color:#a6e22e">getClass</span><span style="color:#f92672">().</span><span style="color:#a6e22e">getAnnotation</span><span style="color:#f92672">(</span>RpcService<span style="color:#f92672">.</span><span style="color:#a6e22e">class</span><span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">//注册到zk上
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>rpcService <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">try</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>                String serviceName <span style="color:#f92672">=</span> rpcService<span style="color:#f92672">.</span><span style="color:#a6e22e">interfaceType</span><span style="color:#f92672">().</span><span style="color:#a6e22e">getName</span><span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>                String version <span style="color:#f92672">=</span> rpcService<span style="color:#f92672">.</span><span style="color:#a6e22e">version</span><span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#75715e">//将bean存储在本地缓存，用于服务处理请求时反射调用
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>                LocalServerCache<span style="color:#f92672">.</span><span style="color:#a6e22e">store</span><span style="color:#f92672">(</span>ServiceUtil<span style="color:#f92672">.</span><span style="color:#a6e22e">serviceKey</span><span style="color:#f92672">(</span>serviceName<span style="color:#f92672">,</span> version<span style="color:#f92672">),</span> bean<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>				
+</span></span><span style="display:flex;"><span>                <span style="color:#75715e">//服务信息封装到serviceInfo中
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>                ServiceInfo serviceInfo <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> ServiceInfo<span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#75715e">//服务名称
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>                serviceInfo<span style="color:#f92672">.</span><span style="color:#a6e22e">setServiceName</span><span style="color:#f92672">(</span>ServiceUtil<span style="color:#f92672">.</span><span style="color:#a6e22e">serviceKey</span><span style="color:#f92672">(</span>serviceName<span style="color:#f92672">,</span> version<span style="color:#f92672">));</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#75715e">//服务端口
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>                serviceInfo<span style="color:#f92672">.</span><span style="color:#a6e22e">setPort</span><span style="color:#f92672">(</span>properties<span style="color:#f92672">.</span><span style="color:#a6e22e">getPort</span><span style="color:#f92672">());</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#75715e">//服务地址
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>                serviceInfo<span style="color:#f92672">.</span><span style="color:#a6e22e">setAddress</span><span style="color:#f92672">(</span>InetAddress<span style="color:#f92672">.</span><span style="color:#a6e22e">getLocalHost</span><span style="color:#f92672">().</span><span style="color:#a6e22e">getHostAddress</span><span style="color:#f92672">());</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#75715e">//应用程序名称
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>                serviceInfo<span style="color:#f92672">.</span><span style="color:#a6e22e">setAppName</span><span style="color:#f92672">(</span>properties<span style="color:#f92672">.</span><span style="color:#a6e22e">getAppName</span><span style="color:#f92672">());</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>                <span style="color:#75715e">// 服务注册zk中
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>                registryService<span style="color:#f92672">.</span><span style="color:#a6e22e">register</span><span style="color:#f92672">(</span>serviceInfo<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#f92672">}</span> <span style="color:#66d9ef">catch</span> <span style="color:#f92672">(</span>Exception ex<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>                log<span style="color:#f92672">.</span><span style="color:#a6e22e">error</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;服务注册出错:{}&#34;</span><span style="color:#f92672">,</span> ex<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> bean<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">/**
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * 启动rpc服务 处理请求
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     *
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * @param args
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     */</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">//项目启动之后，立即执行run方法，开启一个线程启动rpc服务。
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#a6e22e">@Override</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">run</span><span style="color:#f92672">(</span>String<span style="color:#f92672">...</span> args<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">new</span> Thread<span style="color:#f92672">(()</span> <span style="color:#f92672">-&gt;</span> rpcServer<span style="color:#f92672">.</span><span style="color:#a6e22e">start</span><span style="color:#f92672">(</span>properties<span style="color:#f92672">.</span><span style="color:#a6e22e">getPort</span><span style="color:#f92672">())).</span><span style="color:#a6e22e">start</span><span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>        log<span style="color:#f92672">.</span><span style="color:#a6e22e">info</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34; rpc server :{} start, appName :{} , port :{}&#34;</span><span style="color:#f92672">,</span> rpcServer<span style="color:#f92672">,</span> properties<span style="color:#f92672">.</span><span style="color:#a6e22e">getAppName</span><span style="color:#f92672">(),</span> properties<span style="color:#f92672">.</span><span style="color:#a6e22e">getPort</span><span style="color:#f92672">());</span>
+</span></span><span style="display:flex;"><span>        Runtime<span style="color:#f92672">.</span><span style="color:#a6e22e">getRuntime</span><span style="color:#f92672">().</span><span style="color:#a6e22e">addShutdownHook</span><span style="color:#f92672">(</span><span style="color:#66d9ef">new</span> Thread<span style="color:#f92672">(()</span> <span style="color:#f92672">-&gt;</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">try</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#75715e">// 关闭之后把服务从ZK上清楚
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>                registryService<span style="color:#f92672">.</span><span style="color:#a6e22e">destroy</span><span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#f92672">}</span><span style="color:#66d9ef">catch</span> <span style="color:#f92672">(</span>Exception ex<span style="color:#f92672">){</span>
+</span></span><span style="display:flex;"><span>                log<span style="color:#f92672">.</span><span style="color:#a6e22e">error</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;&#34;</span><span style="color:#f92672">,</span> ex<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">}));</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span></code></pre></div><h2 id="消费服务">消费服务</h2>
+<p><img src="/img/RPC/RPC5/2.png" alt=""></p>
+<p>consumer的启动</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#f92672">import</span> org.springframework.boot.SpringApplication<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> org.springframework.boot.autoconfigure.SpringBootApplication<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> org.springframework.context.annotation.ComponentScan<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">@SpringBootApplication</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">ConsumerApplication</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">main</span><span style="color:#f92672">(</span>String<span style="color:#f92672">[]</span> args<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>        SpringApplication<span style="color:#f92672">.</span><span style="color:#a6e22e">run</span><span style="color:#f92672">(</span>ConsumerApplication<span style="color:#f92672">.</span><span style="color:#a6e22e">class</span><span style="color:#f92672">,</span> args<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span></code></pre></div><p>服务消费需要使用自定义的@RpcAutowired注解标识，是一个复合注解，基于@Autowired</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#a6e22e">@Target</span><span style="color:#f92672">({</span>ElementType<span style="color:#f92672">.</span><span style="color:#a6e22e">CONSTRUCTOR</span><span style="color:#f92672">,</span> ElementType<span style="color:#f92672">.</span><span style="color:#a6e22e">METHOD</span><span style="color:#f92672">,</span> ElementType<span style="color:#f92672">.</span><span style="color:#a6e22e">PARAMETER</span><span style="color:#f92672">,</span> ElementType<span style="color:#f92672">.</span><span style="color:#a6e22e">FIELD</span><span style="color:#f92672">,</span> ElementType<span style="color:#f92672">.</span><span style="color:#a6e22e">ANNOTATION_TYPE</span><span style="color:#f92672">})</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">@Retention</span><span style="color:#f92672">(</span>RetentionPolicy<span style="color:#f92672">.</span><span style="color:#a6e22e">RUNTIME</span><span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">@Documented</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">@Autowired</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#a6e22e">@interface</span> RpcAutowired <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    String <span style="color:#a6e22e">version</span><span style="color:#f92672">()</span> <span style="color:#66d9ef">default</span> <span style="color:#e6db74">&#34;1.0&#34;</span><span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span></code></pre></div><p>HelloWorldController代码为</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#a6e22e">@Controller</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">HelloWorldController</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">@RpcAutowired</span><span style="color:#f92672">(</span>version <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;1.0&#34;</span><span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> HelloWordService helloWordService<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">@GetMapping</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;/hello/world&#34;</span><span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> ResponseEntity<span style="color:#f92672">&lt;</span>String<span style="color:#f92672">&gt;</span> <span style="color:#a6e22e">pullServiceInfo</span><span style="color:#f92672">(</span><span style="color:#a6e22e">@RequestParam</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;name&#34;</span><span style="color:#f92672">)</span> String name<span style="color:#f92672">){</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span>  ResponseEntity<span style="color:#f92672">.</span><span style="color:#a6e22e">ok</span><span style="color:#f92672">(</span>helloWordService<span style="color:#f92672">.</span><span style="color:#a6e22e">sayHello</span><span style="color:#f92672">(</span>name<span style="color:#f92672">));</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span></code></pre></div><p>让客户端无感知调用服务，要使用到动态代理，定义一个服务（helloWorldervice）,但是没有实现类（肯定没有啊，实现是在服务端那边呢），就需要给他赋值代理类，在代理类中发起请求调用。</p>
+<p>基于Spring boot自动装配，服务消费者启动，bean后置处理器RpcClientProcessor开始工作，它遍历所有的bean，判断每个bean中的属性是否被@RpcAutowired注解修饰，有的话把该属性动态赋值代理，再次调用时会调用代理类的invoke方法。</p>
+<p>BeanFactoryPostProcessor和上面介绍的BeanPostProcessor接口类似，也是属于一个回调接口。所不同的是BeanPostProcessor接口回调对应的主体是bean，其可以在bean实例化以后但是在调用其初始化方法前后进行回调以达到对bean进行处理的效果。而在本文将要介绍的BeanFactoryPostProcessor的主体是BeanFactory，并且该接口中只定义了一个方法，其将会在ApplicationContext内部的BeanFactory加载完bean的定义后，但是在对应的bean实例化之前进行回调。所以通常我们可以通过实现该接口来对实例化之前的bean定义进行修改。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#f92672">package</span> com.rrtv.rpc.client.processor<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">/**
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> * @Classname RpcClientProcessor
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> * @Description bean 后置处理器 获取所有bean
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> * 判断bean字段是否被 {@link com.rrtv.rpc.client.annotation.RpcAutowired } 注解修饰
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> * 动态修改被修饰字段的值为代理对象 {@link ClientStubProxyFactory}
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> * @Date 2021/7/15 16:06
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> */</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">RpcClientProcessor</span> <span style="color:#66d9ef">implements</span> BeanFactoryPostProcessor<span style="color:#f92672">,</span> ApplicationContextAware <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> ClientStubProxyFactory clientStubProxyFactory<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> DiscoveryService discoveryService<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> RpcClientProperties properties<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> ApplicationContext applicationContext<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> <span style="color:#a6e22e">RpcClientProcessor</span><span style="color:#f92672">(</span>ClientStubProxyFactory clientStubProxyFactory<span style="color:#f92672">,</span> DiscoveryService discoveryService<span style="color:#f92672">,</span> RpcClientProperties properties<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">clientStubProxyFactory</span> <span style="color:#f92672">=</span> clientStubProxyFactory<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">discoveryService</span> <span style="color:#f92672">=</span> discoveryService<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">properties</span> <span style="color:#f92672">=</span> properties<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">@Override</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">postProcessBeanFactory</span><span style="color:#f92672">(</span>ConfigurableListableBeanFactory beanFactory<span style="color:#f92672">)</span> <span style="color:#66d9ef">throws</span> BeansException <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">//获取所有的BeanName
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#66d9ef">for</span> <span style="color:#f92672">(</span>String beanDefinitionName <span style="color:#f92672">:</span> beanFactory<span style="color:#f92672">.</span><span style="color:#a6e22e">getBeanDefinitionNames</span><span style="color:#f92672">())</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">//获取对应的Bean定义
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>            BeanDefinition beanDefinition <span style="color:#f92672">=</span> beanFactory<span style="color:#f92672">.</span><span style="color:#a6e22e">getBeanDefinition</span><span style="color:#f92672">(</span>beanDefinitionName<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>            String beanClassName <span style="color:#f92672">=</span> beanDefinition<span style="color:#f92672">.</span><span style="color:#a6e22e">getBeanClassName</span><span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>beanClassName <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#75715e">//反射获取class
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>                Class<span style="color:#f92672">&lt;?&gt;</span> clazz <span style="color:#f92672">=</span> ClassUtils<span style="color:#f92672">.</span><span style="color:#a6e22e">resolveClassName</span><span style="color:#f92672">(</span>beanClassName<span style="color:#f92672">,</span> <span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">getClass</span><span style="color:#f92672">().</span><span style="color:#a6e22e">getClassLoader</span><span style="color:#f92672">());</span>
+</span></span><span style="display:flex;"><span>                ReflectionUtils<span style="color:#f92672">.</span><span style="color:#a6e22e">doWithFields</span><span style="color:#f92672">(</span>clazz<span style="color:#f92672">,</span> field <span style="color:#f92672">-&gt;</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>                    RpcAutowired rpcAutowired <span style="color:#f92672">=</span> AnnotationUtils<span style="color:#f92672">.</span><span style="color:#a6e22e">getAnnotation</span><span style="color:#f92672">(</span>field<span style="color:#f92672">,</span> RpcAutowired<span style="color:#f92672">.</span><span style="color:#a6e22e">class</span><span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>                  	<span style="color:#75715e">//对应的属性被被@rpcAutowired修饰的话
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>                    <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>rpcAutowired <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>                        Object bean <span style="color:#f92672">=</span> applicationContext<span style="color:#f92672">.</span><span style="color:#a6e22e">getBean</span><span style="color:#f92672">(</span>clazz<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>                        field<span style="color:#f92672">.</span><span style="color:#a6e22e">setAccessible</span><span style="color:#f92672">(</span><span style="color:#66d9ef">true</span><span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>                        <span style="color:#75715e">// 修改为代理对象
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>                        ReflectionUtils<span style="color:#f92672">.</span><span style="color:#a6e22e">setField</span><span style="color:#f92672">(</span>field<span style="color:#f92672">,</span> bean<span style="color:#f92672">,</span> clientStubProxyFactory<span style="color:#f92672">.</span><span style="color:#a6e22e">getProxy</span><span style="color:#f92672">(</span>field<span style="color:#f92672">.</span><span style="color:#a6e22e">getType</span><span style="color:#f92672">(),</span> rpcAutowired<span style="color:#f92672">.</span><span style="color:#a6e22e">version</span><span style="color:#f92672">(),</span> discoveryService<span style="color:#f92672">,</span> properties<span style="color:#f92672">));</span>
+</span></span><span style="display:flex;"><span>                    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#f92672">});</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">@Override</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">setApplicationContext</span><span style="color:#f92672">(</span>ApplicationContext applicationContext<span style="color:#f92672">)</span> <span style="color:#66d9ef">throws</span> BeansException <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">applicationContext</span> <span style="color:#f92672">=</span> applicationContext<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span></code></pre></div><p>上面的ReflectionUtils.setField方法，ReflectionUtils是反射类，<strong>void setField(Field field, Object target, Object value)</strong>
+在指定对象（target）中给指定字段（field）设置指定值（value）；</p>
+<p>获取代理对象的工厂：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#f92672">package</span> com.rrtv.rpc.client.proxy<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> com.rrtv.rpc.client.config.RpcClientProperties<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> com.rrtv.rpc.core.discovery.DiscoveryService<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> java.lang.reflect.Proxy<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> java.util.HashMap<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> java.util.Map<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">/**
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> * @Author: lzy
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> * @Date: 2021/7/14 13:27
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> */</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">ClientStubProxyFactory</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// objectCache存放 不同的类（类中有@RpcAutowired注解的自动注入    ），对应的代理对象
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">private</span> Map<span style="color:#f92672">&lt;</span>Class<span style="color:#f92672">&lt;?&gt;,</span> Object<span style="color:#f92672">&gt;</span> objectCache <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> HashMap<span style="color:#f92672">&lt;&gt;();</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">/**
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * 获取代理对象
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     *
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * @param clazz   接口
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * @param version 服务版本
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * @param &lt;T&gt;
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * @return 代理对象
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     */</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> <span style="color:#f92672">&lt;</span>T<span style="color:#f92672">&gt;</span> T <span style="color:#a6e22e">getProxy</span><span style="color:#f92672">(</span>Class<span style="color:#f92672">&lt;</span>T<span style="color:#f92672">&gt;</span> clazz<span style="color:#f92672">,</span> String version<span style="color:#f92672">,</span> DiscoveryService discoveryService<span style="color:#f92672">,</span> RpcClientProperties properties<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> <span style="color:#f92672">(</span>T<span style="color:#f92672">)</span> objectCache<span style="color:#f92672">.</span><span style="color:#a6e22e">computeIfAbsent</span><span style="color:#f92672">(</span>clazz<span style="color:#f92672">,</span> clz <span style="color:#f92672">-&gt;</span>
+</span></span><span style="display:flex;"><span>                Proxy<span style="color:#f92672">.</span><span style="color:#a6e22e">newProxyInstance</span><span style="color:#f92672">(</span>clz<span style="color:#f92672">.</span><span style="color:#a6e22e">getClassLoader</span><span style="color:#f92672">(),</span> <span style="color:#66d9ef">new</span> Class<span style="color:#f92672">[]{</span>clz<span style="color:#f92672">},</span> <span style="color:#66d9ef">new</span> ClientStubInvocationHandler<span style="color:#f92672">(</span>discoveryService<span style="color:#f92672">,</span> properties<span style="color:#f92672">,</span> clz<span style="color:#f92672">,</span> version<span style="color:#f92672">))</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span></code></pre></div><p>ClientStubInvocationHandler代理类：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#f92672">package</span> com.rrtv.rpc.client.proxy<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">/**
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> * @Author: changjiu.wang
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> * @Date: 2021/7/24 22:52
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> */</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">@Slf4j</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">ClientStubInvocationHandler</span> <span style="color:#66d9ef">implements</span> InvocationHandler <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> DiscoveryService discoveryService<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> RpcClientProperties properties<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> Class<span style="color:#f92672">&lt;?&gt;</span> calzz<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> String version<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> <span style="color:#a6e22e">ClientStubInvocationHandler</span><span style="color:#f92672">(</span>DiscoveryService discoveryService<span style="color:#f92672">,</span> RpcClientProperties properties<span style="color:#f92672">,</span> Class<span style="color:#f92672">&lt;?&gt;</span> calzz<span style="color:#f92672">,</span> String version<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">super</span><span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">calzz</span> <span style="color:#f92672">=</span> calzz<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">version</span> <span style="color:#f92672">=</span> version<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">discoveryService</span> <span style="color:#f92672">=</span> discoveryService<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">properties</span> <span style="color:#f92672">=</span> properties<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">@Override</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> Object <span style="color:#a6e22e">invoke</span><span style="color:#f92672">(</span>Object proxy<span style="color:#f92672">,</span> Method method<span style="color:#f92672">,</span> Object<span style="color:#f92672">[]</span> args<span style="color:#f92672">)</span> <span style="color:#66d9ef">throws</span> Throwable <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 1、获得服务信息
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#75715e">//根据服务名称和版本号发现服务，具体实现是在core中
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        ServiceInfo serviceInfo <span style="color:#f92672">=</span> discoveryService<span style="color:#f92672">.</span><span style="color:#a6e22e">discovery</span><span style="color:#f92672">(</span>ServiceUtil<span style="color:#f92672">.</span><span style="color:#a6e22e">serviceKey</span><span style="color:#f92672">(</span><span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">calzz</span><span style="color:#f92672">.</span><span style="color:#a6e22e">getName</span><span style="color:#f92672">(),</span> <span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">version</span><span style="color:#f92672">));</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">//没有此服务，页面不存在
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>serviceInfo <span style="color:#f92672">==</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">throw</span> <span style="color:#66d9ef">new</span> ResourceNotFoundException<span style="color:#f92672">(</span><span style="color:#e6db74">&#34;404&#34;</span><span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>	   <span style="color:#75715e">//messageprotocal 自定义的消息协议，在core中实现
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        MessageProtocol<span style="color:#f92672">&lt;</span>RpcRequest<span style="color:#f92672">&gt;</span> messageProtocol <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> MessageProtocol<span style="color:#f92672">&lt;&gt;();</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 设置请求头
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        messageProtocol<span style="color:#f92672">.</span><span style="color:#a6e22e">setHeader</span><span style="color:#f92672">(</span>MessageHeader<span style="color:#f92672">.</span><span style="color:#a6e22e">build</span><span style="color:#f92672">(</span>properties<span style="color:#f92672">.</span><span style="color:#a6e22e">getSerialization</span><span style="color:#f92672">()));</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 设置请求体
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        RpcRequest request <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> RpcRequest<span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>        request<span style="color:#f92672">.</span><span style="color:#a6e22e">setServiceName</span><span style="color:#f92672">(</span>ServiceUtil<span style="color:#f92672">.</span><span style="color:#a6e22e">serviceKey</span><span style="color:#f92672">(</span><span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">calzz</span><span style="color:#f92672">.</span><span style="color:#a6e22e">getName</span><span style="color:#f92672">(),</span> <span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">version</span><span style="color:#f92672">));</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">//请求调用的方法
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        request<span style="color:#f92672">.</span><span style="color:#a6e22e">setMethod</span><span style="color:#f92672">(</span>method<span style="color:#f92672">.</span><span style="color:#a6e22e">getName</span><span style="color:#f92672">());</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">//参数类型
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        request<span style="color:#f92672">.</span><span style="color:#a6e22e">setParameterTypes</span><span style="color:#f92672">(</span>method<span style="color:#f92672">.</span><span style="color:#a6e22e">getParameterTypes</span><span style="color:#f92672">());</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">//参数
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        request<span style="color:#f92672">.</span><span style="color:#a6e22e">setParameters</span><span style="color:#f92672">(</span>args<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>        messageProtocol<span style="color:#f92672">.</span><span style="color:#a6e22e">setBody</span><span style="color:#f92672">(</span>request<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 发送网络请求 拿到结果
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        MessageProtocol<span style="color:#f92672">&lt;</span>RpcResponse<span style="color:#f92672">&gt;</span> responseMessageProtocol <span style="color:#f92672">=</span> NetClientTransportFactory<span style="color:#f92672">.</span><span style="color:#a6e22e">getNetClientTransport</span><span style="color:#f92672">()</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#f92672">.</span><span style="color:#a6e22e">sendRequest</span><span style="color:#f92672">(</span>RequestMetadata<span style="color:#f92672">.</span><span style="color:#a6e22e">builder</span><span style="color:#f92672">().</span><span style="color:#a6e22e">protocol</span><span style="color:#f92672">(</span>messageProtocol<span style="color:#f92672">).</span><span style="color:#a6e22e">address</span><span style="color:#f92672">(</span>serviceInfo<span style="color:#f92672">.</span><span style="color:#a6e22e">getAddress</span><span style="color:#f92672">())</span>
+</span></span><span style="display:flex;"><span>                        <span style="color:#f92672">.</span><span style="color:#a6e22e">port</span><span style="color:#f92672">(</span>serviceInfo<span style="color:#f92672">.</span><span style="color:#a6e22e">getPort</span><span style="color:#f92672">()).</span><span style="color:#a6e22e">timeout</span><span style="color:#f92672">(</span>properties<span style="color:#f92672">.</span><span style="color:#a6e22e">getTimeout</span><span style="color:#f92672">()).</span><span style="color:#a6e22e">build</span><span style="color:#f92672">());</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>responseMessageProtocol <span style="color:#f92672">==</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>            log<span style="color:#f92672">.</span><span style="color:#a6e22e">error</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;请求超时&#34;</span><span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">throw</span> <span style="color:#66d9ef">new</span> RpcException<span style="color:#f92672">(</span><span style="color:#e6db74">&#34;rpc调用结果失败， 请求超时 timeout:&#34;</span> <span style="color:#f92672">+</span> properties<span style="color:#f92672">.</span><span style="color:#a6e22e">getTimeout</span><span style="color:#f92672">());</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> <span style="color:#f92672">(!</span>MsgStatus<span style="color:#f92672">.</span><span style="color:#a6e22e">isSuccess</span><span style="color:#f92672">(</span>responseMessageProtocol<span style="color:#f92672">.</span><span style="color:#a6e22e">getHeader</span><span style="color:#f92672">().</span><span style="color:#a6e22e">getStatus</span><span style="color:#f92672">()))</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>            log<span style="color:#f92672">.</span><span style="color:#a6e22e">error</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;rpc调用结果失败， message：{}&#34;</span><span style="color:#f92672">,</span> responseMessageProtocol<span style="color:#f92672">.</span><span style="color:#a6e22e">getBody</span><span style="color:#f92672">().</span><span style="color:#a6e22e">getMessage</span><span style="color:#f92672">());</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">throw</span> <span style="color:#66d9ef">new</span> RpcException<span style="color:#f92672">(</span>responseMessageProtocol<span style="color:#f92672">.</span><span style="color:#a6e22e">getBody</span><span style="color:#f92672">().</span><span style="color:#a6e22e">getMessage</span><span style="color:#f92672">());</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> responseMessageProtocol<span style="color:#f92672">.</span><span style="color:#a6e22e">getBody</span><span style="color:#f92672">().</span><span style="color:#a6e22e">getData</span><span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span></code></pre></div>
+    </section>
+</article>
+
+<footer id="post-meta" class="clearfix">
+    <a href="https://twitter.com/Your%20Twitter%20account">
+    <img class="avatar" src="https://lzy175.github.io/images/avatar.png">
+    <div>
+        <span class="dark">ZhuoY Li</span>
+        <span>I&#39;m an blogger.</span>
+    </div>
+    </a>
+    <section id="sharing">
+        <a class="twitter" href="https://twitter.com/intent/tweet?text=https%3a%2f%2flzy175.github.io%2fposts%2f%25E6%2589%258B%25E5%2586%2599rpc%25E4%25BA%2594%2f - %e6%89%8b%e5%86%99RPC---%e6%9c%8d%e5%8a%a1%e7%9a%84%e5%8f%91%e5%b8%83%e4%b8%8e%e6%b6%88%e8%b4%b9 by @Your%20Twitter%20account"><span class="icon-twitter"> tweet</span></a>
+
+<a class="facebook" href="#" onclick="
+    window.open(
+      'https://www.facebook.com/sharer/sharer.php?u='+encodeURIComponent(location.href),
+      'facebook-share-dialog',
+      'width=626,height=436');
+    return false;"><span class="icon-facebook-rect"> Share</span>
+</a>
+
+    </section>
+</footer>
+
+<div id="disqus_thread"></div>
+<script type="application/javascript">
+    window.disqus_config = function () {
+    
+    
+    
+    };
+    (function() {
+        if (["localhost", "127.0.0.1"].indexOf(window.location.hostname) != -1) {
+            document.getElementById('disqus_thread').innerHTML = 'Disqus comments not available by default when the website is previewed locally.';
+            return;
+        }
+        var d = document, s = d.createElement('script'); s.async = true;
+        s.src = '//' + "spf13" + '.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="https://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+<ul id="post-list" class="archive readmore">
+    <h3>Read more</h3>
+
+    
+    
+    
+        <li>
+            <a href="https://lzy175.github.io/posts/%E6%9C%89%E5%85%B3%E5%8D%95%E4%BE%8B%E6%A8%A1%E5%BC%8F%E5%92%8C%E4%BB%A3%E7%90%86%E6%A8%A1%E5%BC%8F%E7%9A%84%E5%AD%A6%E4%B9%A0/">有关单例模式和代理模式的学习<aside class="dates">Mar 18 2022</aside></a>
+        </li>
+    
+        <li>
+            <a href="https://lzy175.github.io/posts/jdbc%E5%AF%B9%E5%8F%8C%E4%BA%B2%E5%A7%94%E6%B4%BE%E6%A8%A1%E5%9E%8B%E7%9A%84%E7%A0%B4%E5%9D%8F%E5%88%86%E6%9E%90/">JDBC对双亲委派模型的破坏分析<aside class="dates">Mar 15 2022</aside></a>
+        </li>
+    
+        <li>
+            <a href="https://lzy175.github.io/posts/spring%E4%B8%ADbean%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F%E6%BA%90%E7%A0%81%E7%9A%84%E4%BA%86%E8%A7%A3/">Spring中bean生命周期源码的了解<aside class="dates">Jan 15 2022</aside></a>
+        </li>
+    
+        <li>
+            <a href="https://lzy175.github.io/posts/aqs%E6%BA%90%E7%A0%81%E5%88%9D%E6%8E%A2/">AQS源码初探<aside class="dates">Sep 12 2021</aside></a>
+        </li>
+    
+        <li>
+            <a href="https://lzy175.github.io/posts/redis%E5%AE%9E%E7%8E%B0%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81%E4%B8%8E%E5%85%B6%E4%BB%96%E5%AE%9E%E7%8E%B0%E6%96%B9%E6%A1%88/">Redis实现分布式锁与其他实现方案<aside class="dates">Aug 25 2021</aside></a>
+        </li>
+    
+        <li>
+            <a href="https://lzy175.github.io/posts/%E6%89%8B%E5%86%99rpc%E5%85%AD/">手写RPC---负载均衡<aside class="dates">Jul 30 2021</aside></a>
+        </li>
+    
+        <li>
+            <a href="https://lzy175.github.io/posts/%E5%AF%B9%E4%BA%8Eredis%E5%AE%9E%E9%99%85%E6%93%8D%E4%BD%9C%E7%9A%84%E5%AD%A6%E4%B9%A0/">对于redis实际操作的学习<aside class="dates">Jul 29 2021</aside></a>
+        </li>
+    
+        <li>
+            <a href="https://lzy175.github.io/posts/%E6%89%8B%E5%86%99rpc%E5%9B%9B/">手写RPC---序列化和反序列化<aside class="dates">Jul 25 2021</aside></a>
+        </li>
+    
+        <li>
+            <a href="https://lzy175.github.io/posts/%E6%89%8B%E5%86%99rpc%E4%B8%89/">手写RPC---自定义的消息协议和编解码方式<aside class="dates">Jul 23 2021</aside></a>
+        </li>
+    
+        <li>
+            <a href="https://lzy175.github.io/posts/%E6%89%8B%E5%86%99rpc%E4%BA%8C/">手写RPC---整体框架的构建<aside class="dates">Jul 20 2021</aside></a>
+        </li>
+    
+</ul>
+
+
+
+        <footer id="footer">
+    
+        <div id="social">
+
+	
+	
+    
+    <a class="symbol" href="https://www.dribbble.com/">
+        circledribble
+    </a>
+    
+    <a class="symbol" href="https://www.facebook.com/">
+        circlefacebook
+    </a>
+    
+    <a class="symbol" href="https://www.github.com/">
+        circlegithub
+    </a>
+    
+    <a class="symbol" href="https://www.twitter.com/">
+        circletwitterbird
+    </a>
+    
+
+
+</div>
+
+    
+    <p class="small">
+    
+        © Copyright 2022 ZhuoY Li
+    
+    </p>
+</footer>
+
+    </section>
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+<script src="https://lzy175.github.io/js/main.js"></script>
+<script src="https://lzy175.github.io/js/highlight.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+
+
+</body>
+</html>

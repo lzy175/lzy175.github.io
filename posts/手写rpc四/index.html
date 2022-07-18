@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en-us">
+	<head>
+    <meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="author" content="ZhuoY Li">
+<meta name="description" content="It&#39;s never too late to learn.">
+<meta name="generator" content="Hugo 0.101.0" />
+<title>手写RPC---序列化和反序列化</title>
+<link rel="shortcut icon" href="https://lzy175.github.io/images/favicon.ico">
+<link rel="stylesheet" href="https://lzy175.github.io/css/style.css">
+<link rel="stylesheet" href="https://lzy175.github.io/css/highlight.css">
+
+
+
+<link rel="stylesheet" href="https://lzy175.github.io/css/monosocialiconsfont.css">
+
+
+
+<link href="https://lzy175.github.io/index.xml" rel="alternate" type="application/rss+xml" title="Hugo Cactus Theme" />
+
+
+<meta property="og:title" content="手写RPC---序列化和反序列化" />
+<meta property="og:description" content="在encode的代码里，记录真正消息的body时，是将messageProtocol中的body（就是RpcRequest ）先序列化，然后再写入的。要用到序列化技术，注意只有实现了Serializable接口的类才能序列化。
+项目目前实现了Hession序列化和Json序列化。具体的序列化方式在消息头部声明。
+RpcSerialization 序列化接口：
+package com.rrtv.rpc.core.serialization; import java.io.IOException; /** * @Author: lzy * @Date: 2021/7/14 13:36 */ public interface RpcSerialization { &lt;T&gt; byte[] serialize(T obj) throws IOException; &lt;T&gt; T deserialize(byte[] data, Class&lt;T&gt; clz) throws IOException; } json序列化（一下代码参考互联网，笔者对序列化技术的实际操作有点弱）：
+package com.rrtv.rpc.core.serialization; import com.fasterxml.jackson.annotation.JsonInclude; import com.fasterxml.jackson.databind.DeserializationFeature; import com.fasterxml.jackson.databind.ObjectMapper; import java.io.IOException; import java.nio.charset.StandardCharsets; import java.text.SimpleDateFormat; import java.util.Arrays; /** * @Author: lzy * @Date: 2021/7/14 13:36 */ public class JsonSerialization implements RpcSerialization { private static final ObjectMapper MAPPER; static { MAPPER = generateMapper(JsonInclude." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://lzy175.github.io/posts/%E6%89%8B%E5%86%99rpc%E5%9B%9B/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2021-07-25T16:45:19+08:00" />
+<meta property="article:modified_time" content="2021-07-25T16:45:19+08:00" />
+
+
+
+<meta itemprop="name" content="手写RPC---序列化和反序列化">
+<meta itemprop="description" content="在encode的代码里，记录真正消息的body时，是将messageProtocol中的body（就是RpcRequest ）先序列化，然后再写入的。要用到序列化技术，注意只有实现了Serializable接口的类才能序列化。
+项目目前实现了Hession序列化和Json序列化。具体的序列化方式在消息头部声明。
+RpcSerialization 序列化接口：
+package com.rrtv.rpc.core.serialization; import java.io.IOException; /** * @Author: lzy * @Date: 2021/7/14 13:36 */ public interface RpcSerialization { &lt;T&gt; byte[] serialize(T obj) throws IOException; &lt;T&gt; T deserialize(byte[] data, Class&lt;T&gt; clz) throws IOException; } json序列化（一下代码参考互联网，笔者对序列化技术的实际操作有点弱）：
+package com.rrtv.rpc.core.serialization; import com.fasterxml.jackson.annotation.JsonInclude; import com.fasterxml.jackson.databind.DeserializationFeature; import com.fasterxml.jackson.databind.ObjectMapper; import java.io.IOException; import java.nio.charset.StandardCharsets; import java.text.SimpleDateFormat; import java.util.Arrays; /** * @Author: lzy * @Date: 2021/7/14 13:36 */ public class JsonSerialization implements RpcSerialization { private static final ObjectMapper MAPPER; static { MAPPER = generateMapper(JsonInclude."><meta itemprop="datePublished" content="2021-07-25T16:45:19+08:00" />
+<meta itemprop="dateModified" content="2021-07-25T16:45:19+08:00" />
+<meta itemprop="wordCount" content="387">
+<meta itemprop="keywords" content="" />
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="手写RPC---序列化和反序列化"/>
+<meta name="twitter:description" content="在encode的代码里，记录真正消息的body时，是将messageProtocol中的body（就是RpcRequest ）先序列化，然后再写入的。要用到序列化技术，注意只有实现了Serializable接口的类才能序列化。
+项目目前实现了Hession序列化和Json序列化。具体的序列化方式在消息头部声明。
+RpcSerialization 序列化接口：
+package com.rrtv.rpc.core.serialization; import java.io.IOException; /** * @Author: lzy * @Date: 2021/7/14 13:36 */ public interface RpcSerialization { &lt;T&gt; byte[] serialize(T obj) throws IOException; &lt;T&gt; T deserialize(byte[] data, Class&lt;T&gt; clz) throws IOException; } json序列化（一下代码参考互联网，笔者对序列化技术的实际操作有点弱）：
+package com.rrtv.rpc.core.serialization; import com.fasterxml.jackson.annotation.JsonInclude; import com.fasterxml.jackson.databind.DeserializationFeature; import com.fasterxml.jackson.databind.ObjectMapper; import java.io.IOException; import java.nio.charset.StandardCharsets; import java.text.SimpleDateFormat; import java.util.Arrays; /** * @Author: lzy * @Date: 2021/7/14 13:36 */ public class JsonSerialization implements RpcSerialization { private static final ObjectMapper MAPPER; static { MAPPER = generateMapper(JsonInclude."/>
+<meta name="twitter:site" content="@https://www.twitter.com/"/>
+
+
+    </head>
+<body>
+    <nav class="main-nav">
+	
+		<a href='https://lzy175.github.io/'> <span class="arrow">←</span>Home</a>
+	
+
+	
+
+	
+		<a class="cta" href="https://lzy175.github.io/index.xml">Subscribe</a>
+	
+</nav>
+
+    <section id="wrapper">
+        
+        
+<article class="post">
+    <header>
+        <h1>手写RPC---序列化和反序列化</h1>
+        <h2 class="subtitle"></h2>
+        <h2 class="headline">
+        July 25, 2021
+        <br>
+        
+        </h2>
+    </header>
+    <section id="post-body">
+        <p>在encode的代码里，记录真正消息的body时，是将messageProtocol中的body（就是RpcRequest ）先序列化，然后再写入的。要用到序列化技术，注意只有实现了Serializable接口的类才能序列化。</p>
+<p><img src="/img/RPC/RPC3/1.png" alt=""></p>
+<p>项目目前实现了Hession序列化和Json序列化。具体的序列化方式在消息头部声明。</p>
+<p>RpcSerialization 序列化接口：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#f92672">package</span> com.rrtv.rpc.core.serialization<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> java.io.IOException<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">/**
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> * @Author: lzy
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> * @Date: 2021/7/14 13:36
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> */</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">interface</span> <span style="color:#a6e22e">RpcSerialization</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&lt;</span>T<span style="color:#f92672">&gt;</span> <span style="color:#66d9ef">byte</span><span style="color:#f92672">[]</span> <span style="color:#a6e22e">serialize</span><span style="color:#f92672">(</span>T obj<span style="color:#f92672">)</span> <span style="color:#66d9ef">throws</span> IOException<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&lt;</span>T<span style="color:#f92672">&gt;</span> T <span style="color:#a6e22e">deserialize</span><span style="color:#f92672">(</span><span style="color:#66d9ef">byte</span><span style="color:#f92672">[]</span> data<span style="color:#f92672">,</span> Class<span style="color:#f92672">&lt;</span>T<span style="color:#f92672">&gt;</span> clz<span style="color:#f92672">)</span> <span style="color:#66d9ef">throws</span> IOException<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span></code></pre></div><p>json序列化（一下代码参考互联网，笔者对序列化技术的实际操作有点弱）：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#f92672">package</span> com.rrtv.rpc.core.serialization<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> com.fasterxml.jackson.annotation.JsonInclude<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> com.fasterxml.jackson.databind.DeserializationFeature<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> com.fasterxml.jackson.databind.ObjectMapper<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> java.io.IOException<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> java.nio.charset.StandardCharsets<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> java.text.SimpleDateFormat<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> java.util.Arrays<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">/**
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> * @Author: lzy
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> * @Date: 2021/7/14 13:36
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> */</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">JsonSerialization</span> <span style="color:#66d9ef">implements</span> RpcSerialization <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">final</span> ObjectMapper MAPPER<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">static</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>        MAPPER <span style="color:#f92672">=</span> generateMapper<span style="color:#f92672">(</span>JsonInclude<span style="color:#f92672">.</span><span style="color:#a6e22e">Include</span><span style="color:#f92672">.</span><span style="color:#a6e22e">ALWAYS</span><span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">static</span> ObjectMapper <span style="color:#a6e22e">generateMapper</span><span style="color:#f92672">(</span>JsonInclude<span style="color:#f92672">.</span><span style="color:#a6e22e">Include</span> include<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>        ObjectMapper customMapper <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> ObjectMapper<span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        customMapper<span style="color:#f92672">.</span><span style="color:#a6e22e">setSerializationInclusion</span><span style="color:#f92672">(</span>include<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>        customMapper<span style="color:#f92672">.</span><span style="color:#a6e22e">configure</span><span style="color:#f92672">(</span>DeserializationFeature<span style="color:#f92672">.</span><span style="color:#a6e22e">FAIL_ON_UNKNOWN_PROPERTIES</span><span style="color:#f92672">,</span> <span style="color:#66d9ef">false</span><span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>        customMapper<span style="color:#f92672">.</span><span style="color:#a6e22e">configure</span><span style="color:#f92672">(</span>DeserializationFeature<span style="color:#f92672">.</span><span style="color:#a6e22e">FAIL_ON_NUMBERS_FOR_ENUMS</span><span style="color:#f92672">,</span> <span style="color:#66d9ef">true</span><span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>        customMapper<span style="color:#f92672">.</span><span style="color:#a6e22e">setDateFormat</span><span style="color:#f92672">(</span><span style="color:#66d9ef">new</span> SimpleDateFormat<span style="color:#f92672">(</span><span style="color:#e6db74">&#34;yyyy-MM-dd HH:mm:ss&#34;</span><span style="color:#f92672">));</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> customMapper<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">@Override</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> <span style="color:#f92672">&lt;</span>T<span style="color:#f92672">&gt;</span> <span style="color:#66d9ef">byte</span><span style="color:#f92672">[]</span> <span style="color:#a6e22e">serialize</span><span style="color:#f92672">(</span>T obj<span style="color:#f92672">)</span> <span style="color:#66d9ef">throws</span> IOException <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> obj <span style="color:#66d9ef">instanceof</span> String <span style="color:#f92672">?</span> <span style="color:#f92672">((</span>String<span style="color:#f92672">)</span> obj<span style="color:#f92672">).</span><span style="color:#a6e22e">getBytes</span><span style="color:#f92672">()</span> <span style="color:#f92672">:</span> MAPPER<span style="color:#f92672">.</span><span style="color:#a6e22e">writeValueAsString</span><span style="color:#f92672">(</span>obj<span style="color:#f92672">).</span><span style="color:#a6e22e">getBytes</span><span style="color:#f92672">(</span>StandardCharsets<span style="color:#f92672">.</span><span style="color:#a6e22e">UTF_8</span><span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">@Override</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> <span style="color:#f92672">&lt;</span>T<span style="color:#f92672">&gt;</span> T <span style="color:#a6e22e">deserialize</span><span style="color:#f92672">(</span><span style="color:#66d9ef">byte</span><span style="color:#f92672">[]</span> data<span style="color:#f92672">,</span> Class<span style="color:#f92672">&lt;</span>T<span style="color:#f92672">&gt;</span> clz<span style="color:#f92672">)</span> <span style="color:#66d9ef">throws</span> IOException <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> MAPPER<span style="color:#f92672">.</span><span style="color:#a6e22e">readValue</span><span style="color:#f92672">(</span>Arrays<span style="color:#f92672">.</span><span style="color:#a6e22e">toString</span><span style="color:#f92672">(</span>data<span style="color:#f92672">),</span> clz<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span></code></pre></div><p>Hesssion序列化（同上，参考互联网上的模板）：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#f92672">package</span> com.rrtv.rpc.core.serialization<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> com.caucho.hessian.io.HessianSerializerInput<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> com.caucho.hessian.io.HessianSerializerOutput<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> org.springframework.stereotype.Component<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> java.io.ByteArrayInputStream<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> java.io.ByteArrayOutputStream<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">HessianSerialization</span> <span style="color:#66d9ef">implements</span> RpcSerialization <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">/**
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     *  序列化
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * @param object
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * @param &lt;T&gt;
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * @return
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     */</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">@Override</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> <span style="color:#f92672">&lt;</span>T<span style="color:#f92672">&gt;</span> <span style="color:#66d9ef">byte</span><span style="color:#f92672">[]</span> <span style="color:#a6e22e">serialize</span><span style="color:#f92672">(</span>T object<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>object <span style="color:#f92672">==</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">throw</span> <span style="color:#66d9ef">new</span> NullPointerException<span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">byte</span><span style="color:#f92672">[]</span> results<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        HessianSerializerOutput hessianOutput<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">try</span> <span style="color:#f92672">(</span>ByteArrayOutputStream os <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> ByteArrayOutputStream<span style="color:#f92672">())</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>            hessianOutput <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> HessianSerializerOutput<span style="color:#f92672">(</span>os<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>            hessianOutput<span style="color:#f92672">.</span><span style="color:#a6e22e">writeObject</span><span style="color:#f92672">(</span>object<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>            hessianOutput<span style="color:#f92672">.</span><span style="color:#a6e22e">flush</span><span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>            results <span style="color:#f92672">=</span> os<span style="color:#f92672">.</span><span style="color:#a6e22e">toByteArray</span><span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">}</span> <span style="color:#66d9ef">catch</span> <span style="color:#f92672">(</span>Exception e<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">throw</span> <span style="color:#66d9ef">new</span> SerializationException<span style="color:#f92672">(</span>e<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> results<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">/**
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     *  反序列化
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * @param bytes
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * @param clz
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * @param &lt;T&gt;
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * @return
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     */</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">@SuppressWarnings</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;unchecked&#34;</span><span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">@Override</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> <span style="color:#f92672">&lt;</span>T<span style="color:#f92672">&gt;</span> T <span style="color:#a6e22e">deserialize</span><span style="color:#f92672">(</span><span style="color:#66d9ef">byte</span><span style="color:#f92672">[]</span> bytes<span style="color:#f92672">,</span> Class<span style="color:#f92672">&lt;</span>T<span style="color:#f92672">&gt;</span> clz<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>bytes <span style="color:#f92672">==</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">throw</span> <span style="color:#66d9ef">new</span> NullPointerException<span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>        T result<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">try</span> <span style="color:#f92672">(</span>ByteArrayInputStream is <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> ByteArrayInputStream<span style="color:#f92672">(</span>bytes<span style="color:#f92672">))</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>            HessianSerializerInput hessianInput <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> HessianSerializerInput<span style="color:#f92672">(</span>is<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>            result <span style="color:#f92672">=</span> <span style="color:#f92672">(</span>T<span style="color:#f92672">)</span> hessianInput<span style="color:#f92672">.</span><span style="color:#a6e22e">readObject</span><span style="color:#f92672">(</span>clz<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">}</span> <span style="color:#66d9ef">catch</span> <span style="color:#f92672">(</span>Exception e<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">throw</span> <span style="color:#66d9ef">new</span> SerializationException<span style="color:#f92672">(</span>e<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> result<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span></code></pre></div><p>序列化工厂，根据名称返回不同的序列化方法：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#f92672">package</span> com.rrtv.rpc.core.serialization<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">/**
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> * @Author: lzy
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> * @Date: 2021/7/14 22:38
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> */</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">SerializationFactory</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">static</span> RpcSerialization <span style="color:#a6e22e">getRpcSerialization</span><span style="color:#f92672">(</span>SerializationTypeEnum typeEnum<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">switch</span> <span style="color:#f92672">(</span>typeEnum<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">case</span> HESSIAN<span style="color:#f92672">:</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">new</span> HessianSerialization<span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">case</span> JSON<span style="color:#f92672">:</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">new</span> JsonSerialization<span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">default</span><span style="color:#f92672">:</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">throw</span> <span style="color:#66d9ef">new</span> IllegalArgumentException<span style="color:#f92672">(</span><span style="color:#e6db74">&#34;serialization type is illegal&#34;</span><span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span></code></pre></div><p>几种序列化方式的对比：</p>
+<p><strong>一、JDK原生序列化</strong>，只要让类实现 Serializable 接口就行，序列化具体的实现是由ObjectOutputStream和ObjectInputStream来实现的。</p>
+<p><strong>缺点：</strong></p>
+<ol>
+<li>序列化码流太大</li>
+<li>序列化效率低</li>
+<li>无法跨语言</li>
+</ol>
+<p><strong>优点：</strong></p>
+<ol>
+<li>简单</li>
+</ol>
+<p><strong>二、json序列化</strong>，JSON 是典型的 Key-Value 方式，没有数据类型，是一种文本型序列化框架，JSON 的具体格式和特性，网上相关的资料非常多，这里就不再介绍了。他在应用上还是很广泛的，无论是前台 Web 用 Ajax 调用、用磁盘存储文本类型的数据，还是基于 HTTP 协议的 RPC 框架通信，都会选择 JSON 格式。</p>
+<p><strong>缺点：</strong></p>
+<ol>
+<li>JSON进行序列化的额外空间开销比较大，对于大数据量服务就意味着需要巨大的内存和磁盘开销；</li>
+<li>JSON没有类型，但像Java这种强类型语言，需要通过反射统一解决，所以性能不会太好。</li>
+</ol>
+<p><strong>优点：</strong></p>
+<ol>
+<li>简洁明了。</li>
+</ol>
+<p><strong>三、Hessian序列化</strong>，是动态类型、二进制、紧凑的，并且可跨语言移植的一种序列化框架。Hessian 协议要比 JDK、JSON 更加紧凑，性能上要比 JDK、JSON 序列化高效很多，而且生成的字节数也更小。</p>
+<p><strong>缺点：</strong></p>
+<ol>
+<li>官方版本对Java里面一些常见对象的类型不支持，比如LinkedHashMap、LinkedHashSet 等，但是可以通过扩展CollectionDeserializer 类修复；</li>
+<li>Byte/Short 反序列化的时候变成 Integer。</li>
+</ol>
+<p><strong>优点：</strong></p>
+<ol>
+<li>相对于JDk，JSON，更加高效，生成的字节数更小；</li>
+<li>有非常好的兼容性和稳定性。</li>
+</ol>
+<p><strong>四、Protobuf序列化</strong>，Google 公司内部的混合语言数据标准，是一种轻便、高效的结构化数据存储格式，可以用于结构化数据序列化，支持 Java、Python、C++、Go 等语言。Protobuf使用的时候需要定义 IDL（Interface description language），然后使用不同语言的 IDL编译器，生成序列化工具类。</p>
+<p><strong>缺点：</strong></p>
+<ol>
+<li>为了提高性能，protobuf采用了二进制格式进行编码。这直接导致了可读性差；</li>
+<li>对于具有反射和动态语言来讲，用起来比较费劲。</li>
+</ol>
+<p><strong>优点：</strong></p>
+<ol>
+<li>高效；</li>
+<li>支持多种语言；</li>
+<li>支持向前，向后兼容；</li>
+</ol>
+
+    </section>
+</article>
+
+<footer id="post-meta" class="clearfix">
+    <a href="https://twitter.com/Your%20Twitter%20account">
+    <img class="avatar" src="https://lzy175.github.io/images/avatar.png">
+    <div>
+        <span class="dark">ZhuoY Li</span>
+        <span>I&#39;m an blogger.</span>
+    </div>
+    </a>
+    <section id="sharing">
+        <a class="twitter" href="https://twitter.com/intent/tweet?text=https%3a%2f%2flzy175.github.io%2fposts%2f%25E6%2589%258B%25E5%2586%2599rpc%25E5%259B%259B%2f - %e6%89%8b%e5%86%99RPC---%e5%ba%8f%e5%88%97%e5%8c%96%e5%92%8c%e5%8f%8d%e5%ba%8f%e5%88%97%e5%8c%96 by @Your%20Twitter%20account"><span class="icon-twitter"> tweet</span></a>
+
+<a class="facebook" href="#" onclick="
+    window.open(
+      'https://www.facebook.com/sharer/sharer.php?u='+encodeURIComponent(location.href),
+      'facebook-share-dialog',
+      'width=626,height=436');
+    return false;"><span class="icon-facebook-rect"> Share</span>
+</a>
+
+    </section>
+</footer>
+
+<div id="disqus_thread"></div>
+<script type="application/javascript">
+    window.disqus_config = function () {
+    
+    
+    
+    };
+    (function() {
+        if (["localhost", "127.0.0.1"].indexOf(window.location.hostname) != -1) {
+            document.getElementById('disqus_thread').innerHTML = 'Disqus comments not available by default when the website is previewed locally.';
+            return;
+        }
+        var d = document, s = d.createElement('script'); s.async = true;
+        s.src = '//' + "spf13" + '.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="https://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+<ul id="post-list" class="archive readmore">
+    <h3>Read more</h3>
+
+    
+    
+    
+        <li>
+            <a href="https://lzy175.github.io/posts/%E6%9C%89%E5%85%B3%E5%8D%95%E4%BE%8B%E6%A8%A1%E5%BC%8F%E5%92%8C%E4%BB%A3%E7%90%86%E6%A8%A1%E5%BC%8F%E7%9A%84%E5%AD%A6%E4%B9%A0/">有关单例模式和代理模式的学习<aside class="dates">Mar 18 2022</aside></a>
+        </li>
+    
+        <li>
+            <a href="https://lzy175.github.io/posts/jdbc%E5%AF%B9%E5%8F%8C%E4%BA%B2%E5%A7%94%E6%B4%BE%E6%A8%A1%E5%9E%8B%E7%9A%84%E7%A0%B4%E5%9D%8F%E5%88%86%E6%9E%90/">JDBC对双亲委派模型的破坏分析<aside class="dates">Mar 15 2022</aside></a>
+        </li>
+    
+        <li>
+            <a href="https://lzy175.github.io/posts/spring%E4%B8%ADbean%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F%E6%BA%90%E7%A0%81%E7%9A%84%E4%BA%86%E8%A7%A3/">Spring中bean生命周期源码的了解<aside class="dates">Jan 15 2022</aside></a>
+        </li>
+    
+        <li>
+            <a href="https://lzy175.github.io/posts/aqs%E6%BA%90%E7%A0%81%E5%88%9D%E6%8E%A2/">AQS源码初探<aside class="dates">Sep 12 2021</aside></a>
+        </li>
+    
+        <li>
+            <a href="https://lzy175.github.io/posts/redis%E5%AE%9E%E7%8E%B0%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81%E4%B8%8E%E5%85%B6%E4%BB%96%E5%AE%9E%E7%8E%B0%E6%96%B9%E6%A1%88/">Redis实现分布式锁与其他实现方案<aside class="dates">Aug 25 2021</aside></a>
+        </li>
+    
+        <li>
+            <a href="https://lzy175.github.io/posts/%E6%89%8B%E5%86%99rpc%E5%85%AD/">手写RPC---负载均衡<aside class="dates">Jul 30 2021</aside></a>
+        </li>
+    
+        <li>
+            <a href="https://lzy175.github.io/posts/%E5%AF%B9%E4%BA%8Eredis%E5%AE%9E%E9%99%85%E6%93%8D%E4%BD%9C%E7%9A%84%E5%AD%A6%E4%B9%A0/">对于redis实际操作的学习<aside class="dates">Jul 29 2021</aside></a>
+        </li>
+    
+        <li>
+            <a href="https://lzy175.github.io/posts/%E6%89%8B%E5%86%99rpc%E4%BA%94/">手写RPC---服务的发布与消费<aside class="dates">Jul 28 2021</aside></a>
+        </li>
+    
+        <li>
+            <a href="https://lzy175.github.io/posts/%E6%89%8B%E5%86%99rpc%E4%B8%89/">手写RPC---自定义的消息协议和编解码方式<aside class="dates">Jul 23 2021</aside></a>
+        </li>
+    
+        <li>
+            <a href="https://lzy175.github.io/posts/%E6%89%8B%E5%86%99rpc%E4%BA%8C/">手写RPC---整体框架的构建<aside class="dates">Jul 20 2021</aside></a>
+        </li>
+    
+</ul>
+
+
+
+        <footer id="footer">
+    
+        <div id="social">
+
+	
+	
+    
+    <a class="symbol" href="https://www.dribbble.com/">
+        circledribble
+    </a>
+    
+    <a class="symbol" href="https://www.facebook.com/">
+        circlefacebook
+    </a>
+    
+    <a class="symbol" href="https://www.github.com/">
+        circlegithub
+    </a>
+    
+    <a class="symbol" href="https://www.twitter.com/">
+        circletwitterbird
+    </a>
+    
+
+
+</div>
+
+    
+    <p class="small">
+    
+        © Copyright 2022 ZhuoY Li
+    
+    </p>
+</footer>
+
+    </section>
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+<script src="https://lzy175.github.io/js/main.js"></script>
+<script src="https://lzy175.github.io/js/highlight.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+
+
+</body>
+</html>

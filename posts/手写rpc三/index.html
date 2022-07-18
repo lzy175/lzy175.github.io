@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en-us">
+	<head>
+    <meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="author" content="ZhuoY Li">
+<meta name="description" content="It&#39;s never too late to learn.">
+<meta name="generator" content="Hugo 0.101.0" />
+<title>手写RPC---自定义的消息协议和编解码方式</title>
+<link rel="shortcut icon" href="https://lzy175.github.io/images/favicon.ico">
+<link rel="stylesheet" href="https://lzy175.github.io/css/style.css">
+<link rel="stylesheet" href="https://lzy175.github.io/css/highlight.css">
+
+
+
+<link rel="stylesheet" href="https://lzy175.github.io/css/monosocialiconsfont.css">
+
+
+
+<link href="https://lzy175.github.io/index.xml" rel="alternate" type="application/rss+xml" title="Hugo Cactus Theme" />
+
+
+<meta property="og:title" content="手写RPC---自定义的消息协议和编解码方式" />
+<meta property="og:description" content="自定义协议这部分很灵活其实，笔者在网上看到了很多的自定义消息协议，根据目的和应用场景的不同出入也很大，笔者这里参考了网上的一些写法，又加了自己认为比较有必要的一些东西，仅供参考，如果读者有更好的想法或者意见，欢迎讨论，技术是在讨论中不断进步的。
+MessageProtocol，包括了两部分，消息头和消息体：
+package com.rrtv.rpc.core.protocol; import lombok.Data; import java.io.Serializable; /** * @Classname MessageProtocol * @Description 消息协议 * @Date 2021/7/13 15:33 * @Created by lzy */ @Data public class MessageProtocol&lt;T&gt; implements Serializable { /** * 消息头 */ private MessageHeader header; /** * 消息体，消息体分为两种，reponse和request，这里以泛型表示 */ private T body; } request消息体：
+package com.rrtv.rpc.core.common; import lombok.Data; import java.io.Serializable; /** * @Author: lzy * @Date: 2021/7/13 22:55 */ @Data public class RpcRequest implements Serializable { /** * 请求的服务名 &#43; 版本 */ private String serviceName; /** * 请求调用的方法 */ private String method; /** * 参数类型 */ private Class&lt;?" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://lzy175.github.io/posts/%E6%89%8B%E5%86%99rpc%E4%B8%89/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2021-07-23T15:37:50+08:00" />
+<meta property="article:modified_time" content="2021-07-23T15:37:50+08:00" />
+
+
+
+<meta itemprop="name" content="手写RPC---自定义的消息协议和编解码方式">
+<meta itemprop="description" content="自定义协议这部分很灵活其实，笔者在网上看到了很多的自定义消息协议，根据目的和应用场景的不同出入也很大，笔者这里参考了网上的一些写法，又加了自己认为比较有必要的一些东西，仅供参考，如果读者有更好的想法或者意见，欢迎讨论，技术是在讨论中不断进步的。
+MessageProtocol，包括了两部分，消息头和消息体：
+package com.rrtv.rpc.core.protocol; import lombok.Data; import java.io.Serializable; /** * @Classname MessageProtocol * @Description 消息协议 * @Date 2021/7/13 15:33 * @Created by lzy */ @Data public class MessageProtocol&lt;T&gt; implements Serializable { /** * 消息头 */ private MessageHeader header; /** * 消息体，消息体分为两种，reponse和request，这里以泛型表示 */ private T body; } request消息体：
+package com.rrtv.rpc.core.common; import lombok.Data; import java.io.Serializable; /** * @Author: lzy * @Date: 2021/7/13 22:55 */ @Data public class RpcRequest implements Serializable { /** * 请求的服务名 &#43; 版本 */ private String serviceName; /** * 请求调用的方法 */ private String method; /** * 参数类型 */ private Class&lt;?"><meta itemprop="datePublished" content="2021-07-23T15:37:50+08:00" />
+<meta itemprop="dateModified" content="2021-07-23T15:37:50+08:00" />
+<meta itemprop="wordCount" content="646">
+<meta itemprop="keywords" content="" />
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="手写RPC---自定义的消息协议和编解码方式"/>
+<meta name="twitter:description" content="自定义协议这部分很灵活其实，笔者在网上看到了很多的自定义消息协议，根据目的和应用场景的不同出入也很大，笔者这里参考了网上的一些写法，又加了自己认为比较有必要的一些东西，仅供参考，如果读者有更好的想法或者意见，欢迎讨论，技术是在讨论中不断进步的。
+MessageProtocol，包括了两部分，消息头和消息体：
+package com.rrtv.rpc.core.protocol; import lombok.Data; import java.io.Serializable; /** * @Classname MessageProtocol * @Description 消息协议 * @Date 2021/7/13 15:33 * @Created by lzy */ @Data public class MessageProtocol&lt;T&gt; implements Serializable { /** * 消息头 */ private MessageHeader header; /** * 消息体，消息体分为两种，reponse和request，这里以泛型表示 */ private T body; } request消息体：
+package com.rrtv.rpc.core.common; import lombok.Data; import java.io.Serializable; /** * @Author: lzy * @Date: 2021/7/13 22:55 */ @Data public class RpcRequest implements Serializable { /** * 请求的服务名 &#43; 版本 */ private String serviceName; /** * 请求调用的方法 */ private String method; /** * 参数类型 */ private Class&lt;?"/>
+<meta name="twitter:site" content="@https://www.twitter.com/"/>
+
+
+    </head>
+<body>
+    <nav class="main-nav">
+	
+		<a href='https://lzy175.github.io/'> <span class="arrow">←</span>Home</a>
+	
+
+	
+
+	
+		<a class="cta" href="https://lzy175.github.io/index.xml">Subscribe</a>
+	
+</nav>
+
+    <section id="wrapper">
+        
+        
+<article class="post">
+    <header>
+        <h1>手写RPC---自定义的消息协议和编解码方式</h1>
+        <h2 class="subtitle"></h2>
+        <h2 class="headline">
+        July 23, 2021
+        <br>
+        
+        </h2>
+    </header>
+    <section id="post-body">
+        <p>自定义协议这部分很灵活其实，笔者在网上看到了很多的自定义消息协议，根据目的和应用场景的不同出入也很大，笔者这里参考了网上的一些写法，又加了自己认为比较有必要的一些东西，仅供参考，如果读者有更好的想法或者意见，欢迎讨论，技术是在讨论中不断进步的。</p>
+<p><img src="/img/RPC/RPC3/1.png" alt=""></p>
+<p>MessageProtocol，包括了两部分，消息头和消息体：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#f92672">package</span> com.rrtv.rpc.core.protocol<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> lombok.Data<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> java.io.Serializable<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">/**
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> * @Classname MessageProtocol
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> * @Description 消息协议
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> * @Date 2021/7/13 15:33
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> * @Created by lzy
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> */</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">@Data</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">MessageProtocol</span><span style="color:#f92672">&lt;</span>T<span style="color:#f92672">&gt;</span> <span style="color:#66d9ef">implements</span> Serializable <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">/**
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     *  消息头
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     */</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> MessageHeader header<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">/**
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     *  消息体，消息体分为两种，reponse和request，这里以泛型表示
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     */</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> T body<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span></code></pre></div><p>request消息体：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#f92672">package</span> com.rrtv.rpc.core.common<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> lombok.Data<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> java.io.Serializable<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">/**
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> * @Author: lzy
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> * @Date: 2021/7/13 22:55
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> */</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">@Data</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">RpcRequest</span> <span style="color:#66d9ef">implements</span> Serializable <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">/**
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * 请求的服务名 + 版本
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     */</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> String serviceName<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">/**
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * 请求调用的方法
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     */</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> String method<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">/**
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     *  参数类型
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     */</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> Class<span style="color:#f92672">&lt;?&gt;[]</span> parameterTypes<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">/**
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     *  参数
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     */</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> Object<span style="color:#f92672">[]</span> parameters<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span></code></pre></div><p>reponse消息体：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#f92672">package</span> com.rrtv.rpc.core.common<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> lombok.Data<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> java.io.Serializable<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">/**
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> * @Author: lzy
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> * @Date: 2021/7/13 22:56
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> */</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">@Data</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">RpcResponse</span> <span style="color:#66d9ef">implements</span> Serializable <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> Object data<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> String message<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span></code></pre></div><p>MessageHeader，消息头的定义：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#f92672">package</span> com.rrtv.rpc.core.protocol<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> com.rrtv.rpc.core.serialization.SerializationTypeEnum<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> lombok.Data<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> java.io.Serializable<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> java.util.UUID<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">@Data</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">MessageHeader</span> <span style="color:#66d9ef">implements</span> Serializable <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">/*
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">    +---------------------------------------------------------------+
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">    | 魔数 2byte | 协议版本号 1byte | 序列化算法 1byte | 报文类型 1byte  |
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">    +---------------------------------------------------------------+
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">    | 状态 1byte |        消息 ID 32byte     |      数据长度 4byte     |
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">    +---------------------------------------------------------------+
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">    */</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">/**
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     *  魔数魔数是通信双方协商的一个暗号，通常采用固定的几个字节表示。魔数的作用是防止任何人随便向服务器的端口上发送数据。 例如 java Class 文件开头就存储了魔数 0xCAFEBABE，在加载 Class 文件时首先会验证魔数的正确性
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     */</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">short</span> magic<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">/**
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     *  协议版本号，随着业务需求的变化，协议可能需要对结构或字段进行改动，不同版本的协议对应的解析方法也是不同的。
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     */</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">byte</span> version<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">/**
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     *  序列化算法，序列化算法字段表示数据发送方应该采用何种方法将请求的对象转化为二进制，以及如何再将二进制转化为对象，如 JSON、Hessian、Java 自带序列化等。
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     */</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">byte</span> serialization<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">/**
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     *  报文类型，在不同的业务场景中，报文可能存在不同的类型。RPC 框架中有请求、响应、心跳等类型的报文。
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     */</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">byte</span> msgType<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">/**
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     *  状态，状态字段用于标识请求是否正常（SUCCESS、FAIL）。
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     */</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">byte</span> status<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">/**
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     *  消息 ID，请求唯一ID，通过这个请求ID将响应关联起来，也可以通过请求ID做链路追踪。
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     */</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> String requestId<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">/**
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     *  数据长度，标明数据的长度，用于判断是否是一个完整的数据包。
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     */</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">int</span> msgLen<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">static</span> MessageHeader <span style="color:#a6e22e">build</span><span style="color:#f92672">(</span>String serialization<span style="color:#f92672">){</span>
+</span></span><span style="display:flex;"><span>        MessageHeader messageHeader <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> MessageHeader<span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>        messageHeader<span style="color:#f92672">.</span><span style="color:#a6e22e">setMagic</span><span style="color:#f92672">(</span>ProtocolConstants<span style="color:#f92672">.</span><span style="color:#a6e22e">MAGIC</span><span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>        messageHeader<span style="color:#f92672">.</span><span style="color:#a6e22e">setVersion</span><span style="color:#f92672">(</span>ProtocolConstants<span style="color:#f92672">.</span><span style="color:#a6e22e">VERSION</span><span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>        messageHeader<span style="color:#f92672">.</span><span style="color:#a6e22e">setRequestId</span><span style="color:#f92672">(</span>UUID<span style="color:#f92672">.</span><span style="color:#a6e22e">randomUUID</span><span style="color:#f92672">().</span><span style="color:#a6e22e">toString</span><span style="color:#f92672">().</span><span style="color:#a6e22e">replaceAll</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;-&#34;</span><span style="color:#f92672">,</span><span style="color:#e6db74">&#34;&#34;</span><span style="color:#f92672">));</span>
+</span></span><span style="display:flex;"><span>        messageHeader<span style="color:#f92672">.</span><span style="color:#a6e22e">setMsgType</span><span style="color:#f92672">(</span>MsgType<span style="color:#f92672">.</span><span style="color:#a6e22e">REQUEST</span><span style="color:#f92672">.</span><span style="color:#a6e22e">getType</span><span style="color:#f92672">());</span>
+</span></span><span style="display:flex;"><span>        messageHeader<span style="color:#f92672">.</span><span style="color:#a6e22e">setSerialization</span><span style="color:#f92672">(</span>SerializationTypeEnum<span style="color:#f92672">.</span><span style="color:#a6e22e">parseByName</span><span style="color:#f92672">(</span>serialization<span style="color:#f92672">).</span><span style="color:#a6e22e">getType</span><span style="color:#f92672">());</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> messageHeader<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span></code></pre></div><p>编码解码部分是通过继承Netty中的编码解码抽象类来实现的，自定义编码器通过继承netty的。</p>
+<p><img src="/img/RPC/RPC3/2.png" alt=""></p>
+<p>编码encoder，自定义编码器通过继承netty的MessageToByteEncoder&lt;MessageProtocol<!-- raw HTML omitted -->&gt;抽象类来实现消息编码，这个和后续的netty协议联合用：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#f92672">package</span> com.rrtv.rpc.core.codec<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">@Slf4j</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">RpcEncoder</span><span style="color:#f92672">&lt;</span>T<span style="color:#f92672">&gt;</span> <span style="color:#66d9ef">extends</span> MessageToByteEncoder<span style="color:#f92672">&lt;</span>MessageProtocol<span style="color:#f92672">&lt;</span>T<span style="color:#f92672">&gt;&gt;</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">/**
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     *
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     *  +---------------------------------------------------------------+
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     *  | 魔数 2byte | 协议版本号 1byte | 序列化算法 1byte | 报文类型 1byte|
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     *  +---------------------------------------------------------------+
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     *  | 状态 1byte |        消息 ID 32byte     |      数据长度 4byte    |
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     *  +---------------------------------------------------------------+
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     *  |                   数据内容 （长度不定）                         |
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     *  +---------------------------------------------------------------+
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     *
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     *
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * @param channelHandlerContext
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * @param messageProtocol
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * @param byteBuf
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * @throws Exception
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     */</span>
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">//重写encode方法
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#a6e22e">@Override</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">protected</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">encode</span><span style="color:#f92672">(</span>ChannelHandlerContext channelHandlerContext<span style="color:#f92672">,</span> MessageProtocol<span style="color:#f92672">&lt;</span>T<span style="color:#f92672">&gt;</span> messageProtocol<span style="color:#f92672">,</span> ByteBuf byteBuf<span style="color:#f92672">)</span> <span style="color:#66d9ef">throws</span> Exception <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>        MessageHeader header <span style="color:#f92672">=</span> messageProtocol<span style="color:#f92672">.</span><span style="color:#a6e22e">getHeader</span><span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 魔数
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        byteBuf<span style="color:#f92672">.</span><span style="color:#a6e22e">writeShort</span><span style="color:#f92672">(</span>header<span style="color:#f92672">.</span><span style="color:#a6e22e">getMagic</span><span style="color:#f92672">());</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 协议版本号
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        byteBuf<span style="color:#f92672">.</span><span style="color:#a6e22e">writeByte</span><span style="color:#f92672">(</span>header<span style="color:#f92672">.</span><span style="color:#a6e22e">getVersion</span><span style="color:#f92672">());</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 序列化算法
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        byteBuf<span style="color:#f92672">.</span><span style="color:#a6e22e">writeByte</span><span style="color:#f92672">(</span>header<span style="color:#f92672">.</span><span style="color:#a6e22e">getSerialization</span><span style="color:#f92672">());</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 报文类型
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        byteBuf<span style="color:#f92672">.</span><span style="color:#a6e22e">writeByte</span><span style="color:#f92672">(</span>header<span style="color:#f92672">.</span><span style="color:#a6e22e">getMsgType</span><span style="color:#f92672">());</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 状态
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        byteBuf<span style="color:#f92672">.</span><span style="color:#a6e22e">writeByte</span><span style="color:#f92672">(</span>header<span style="color:#f92672">.</span><span style="color:#a6e22e">getStatus</span><span style="color:#f92672">());</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 消息 ID
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        byteBuf<span style="color:#f92672">.</span><span style="color:#a6e22e">writeCharSequence</span><span style="color:#f92672">(</span>header<span style="color:#f92672">.</span><span style="color:#a6e22e">getRequestId</span><span style="color:#f92672">(),</span> Charset<span style="color:#f92672">.</span><span style="color:#a6e22e">forName</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;UTF-8&#34;</span><span style="color:#f92672">));</span>
+</span></span><span style="display:flex;"><span>	
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">//将body序列化后，写入bytebuf
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        RpcSerialization rpcSerialization <span style="color:#f92672">=</span> SerializationFactory<span style="color:#f92672">.</span><span style="color:#a6e22e">getRpcSerialization</span><span style="color:#f92672">(</span>SerializationTypeEnum<span style="color:#f92672">.</span><span style="color:#a6e22e">parseByType</span><span style="color:#f92672">(</span>header<span style="color:#f92672">.</span><span style="color:#a6e22e">getSerialization</span><span style="color:#f92672">()));</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">byte</span><span style="color:#f92672">[]</span> data <span style="color:#f92672">=</span> rpcSerialization<span style="color:#f92672">.</span><span style="color:#a6e22e">serialize</span><span style="color:#f92672">(</span>messageProtocol<span style="color:#f92672">.</span><span style="color:#a6e22e">getBody</span><span style="color:#f92672">());</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 数据长度
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        byteBuf<span style="color:#f92672">.</span><span style="color:#a6e22e">writeInt</span><span style="color:#f92672">(</span>data<span style="color:#f92672">.</span><span style="color:#a6e22e">length</span><span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 数据内容
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        byteBuf<span style="color:#f92672">.</span><span style="color:#a6e22e">writeBytes</span><span style="color:#f92672">(</span>data<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span></code></pre></div><p>解码decoder，自定义解码器通过继承netty的ByteToMessageDecoder抽象类实现消息解码。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#f92672">package</span> com.rrtv.rpc.core.codec<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">/**
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> *  解码器
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> * @Author: lzy
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> * @Date: 2021/7/12 22:28
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> */</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">@Slf4j</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">RpcDecoder</span> <span style="color:#66d9ef">extends</span> ByteToMessageDecoder <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">/**
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     *
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     *  +---------------------------------------------------------------+
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     *  | 魔数 2byte | 协议版本号 1byte | 序列化算法 1byte | 报文类型 1byte|
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     *  +---------------------------------------------------------------+
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     *  | 状态 1byte |        消息 ID 8byte     |      数据长度 4byte     |
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     *  +---------------------------------------------------------------+
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     *  |                   数据内容 （长度不定）                         |
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     *  +---------------------------------------------------------------+
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     *
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     *  decode 这个方法会被循环调用
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * @param ctx
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * @param in
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * @param out
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * @throws Exception
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     */</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">@Override</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">protected</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">decode</span><span style="color:#f92672">(</span>ChannelHandlerContext ctx<span style="color:#f92672">,</span> ByteBuf in<span style="color:#f92672">,</span> List<span style="color:#f92672">&lt;</span>Object<span style="color:#f92672">&gt;</span> out<span style="color:#f92672">)</span> <span style="color:#66d9ef">throws</span> Exception <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>in<span style="color:#f92672">.</span><span style="color:#a6e22e">readableBytes</span><span style="color:#f92672">()</span> <span style="color:#f92672">&lt;</span> ProtocolConstants<span style="color:#f92672">.</span><span style="color:#a6e22e">HEADER_TOTAL_LEN</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">// 可读的数据小于请求头总的大小 直接丢弃
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>            <span style="color:#66d9ef">return</span><span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 标记 ByteBuf 读指针位置
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        in<span style="color:#f92672">.</span><span style="color:#a6e22e">markReaderIndex</span><span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 魔数
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#66d9ef">short</span> magic <span style="color:#f92672">=</span> in<span style="color:#f92672">.</span><span style="color:#a6e22e">readShort</span><span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>magic <span style="color:#f92672">!=</span> ProtocolConstants<span style="color:#f92672">.</span><span style="color:#a6e22e">MAGIC</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">throw</span> <span style="color:#66d9ef">new</span> IllegalArgumentException<span style="color:#f92672">(</span><span style="color:#e6db74">&#34;magic number is illegal, &#34;</span> <span style="color:#f92672">+</span> magic<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">byte</span> version <span style="color:#f92672">=</span> in<span style="color:#f92672">.</span><span style="color:#a6e22e">readByte</span><span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">byte</span> serializeType <span style="color:#f92672">=</span> in<span style="color:#f92672">.</span><span style="color:#a6e22e">readByte</span><span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">byte</span> msgType <span style="color:#f92672">=</span> in<span style="color:#f92672">.</span><span style="color:#a6e22e">readByte</span><span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">byte</span> status <span style="color:#f92672">=</span> in<span style="color:#f92672">.</span><span style="color:#a6e22e">readByte</span><span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>        CharSequence requestId <span style="color:#f92672">=</span> in<span style="color:#f92672">.</span><span style="color:#a6e22e">readCharSequence</span><span style="color:#f92672">(</span>ProtocolConstants<span style="color:#f92672">.</span><span style="color:#a6e22e">REQ_LEN</span><span style="color:#f92672">,</span> Charset<span style="color:#f92672">.</span><span style="color:#a6e22e">forName</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;UTF-8&#34;</span><span style="color:#f92672">));</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">int</span> dataLength <span style="color:#f92672">=</span> in<span style="color:#f92672">.</span><span style="color:#a6e22e">readInt</span><span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>in<span style="color:#f92672">.</span><span style="color:#a6e22e">readableBytes</span><span style="color:#f92672">()</span> <span style="color:#f92672">&lt;</span> dataLength<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">// 可读的数据长度小于 请求体长度 直接丢弃并重置 读指针位置
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>            in<span style="color:#f92672">.</span><span style="color:#a6e22e">resetReaderIndex</span><span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">return</span><span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">byte</span><span style="color:#f92672">[]</span> data <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> <span style="color:#66d9ef">byte</span><span style="color:#f92672">[</span>dataLength<span style="color:#f92672">];</span>
+</span></span><span style="display:flex;"><span>        in<span style="color:#f92672">.</span><span style="color:#a6e22e">readBytes</span><span style="color:#f92672">(</span>data<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        MsgType msgTypeEnum <span style="color:#f92672">=</span> MsgType<span style="color:#f92672">.</span><span style="color:#a6e22e">findByType</span><span style="color:#f92672">(</span>msgType<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>msgTypeEnum <span style="color:#f92672">==</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">return</span><span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        MessageHeader header <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> MessageHeader<span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>        header<span style="color:#f92672">.</span><span style="color:#a6e22e">setMagic</span><span style="color:#f92672">(</span>magic<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>        header<span style="color:#f92672">.</span><span style="color:#a6e22e">setVersion</span><span style="color:#f92672">(</span>version<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>        header<span style="color:#f92672">.</span><span style="color:#a6e22e">setSerialization</span><span style="color:#f92672">(</span>serializeType<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>        header<span style="color:#f92672">.</span><span style="color:#a6e22e">setStatus</span><span style="color:#f92672">(</span>status<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>        header<span style="color:#f92672">.</span><span style="color:#a6e22e">setRequestId</span><span style="color:#f92672">(</span>String<span style="color:#f92672">.</span><span style="color:#a6e22e">valueOf</span><span style="color:#f92672">(</span>requestId<span style="color:#f92672">));</span>
+</span></span><span style="display:flex;"><span>        header<span style="color:#f92672">.</span><span style="color:#a6e22e">setMsgType</span><span style="color:#f92672">(</span>msgType<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>        header<span style="color:#f92672">.</span><span style="color:#a6e22e">setMsgLen</span><span style="color:#f92672">(</span>dataLength<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        RpcSerialization rpcSerialization <span style="color:#f92672">=</span> SerializationFactory<span style="color:#f92672">.</span><span style="color:#a6e22e">getRpcSerialization</span><span style="color:#f92672">(</span>SerializationTypeEnum<span style="color:#f92672">.</span><span style="color:#a6e22e">parseByType</span><span style="color:#f92672">(</span>serializeType<span style="color:#f92672">));</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">switch</span> <span style="color:#f92672">(</span>msgTypeEnum<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">case</span> REQUEST<span style="color:#f92672">:</span>
+</span></span><span style="display:flex;"><span>                RpcRequest request <span style="color:#f92672">=</span> rpcSerialization<span style="color:#f92672">.</span><span style="color:#a6e22e">deserialize</span><span style="color:#f92672">(</span>data<span style="color:#f92672">,</span> RpcRequest<span style="color:#f92672">.</span><span style="color:#a6e22e">class</span><span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>request <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>                    MessageProtocol<span style="color:#f92672">&lt;</span>RpcRequest<span style="color:#f92672">&gt;</span> protocol <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> MessageProtocol<span style="color:#f92672">&lt;&gt;();</span>
+</span></span><span style="display:flex;"><span>                    protocol<span style="color:#f92672">.</span><span style="color:#a6e22e">setHeader</span><span style="color:#f92672">(</span>header<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>                    protocol<span style="color:#f92672">.</span><span style="color:#a6e22e">setBody</span><span style="color:#f92672">(</span>request<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>                    out<span style="color:#f92672">.</span><span style="color:#a6e22e">add</span><span style="color:#f92672">(</span>protocol<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">break</span><span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">case</span> RESPONSE<span style="color:#f92672">:</span>
+</span></span><span style="display:flex;"><span>                RpcResponse response <span style="color:#f92672">=</span> rpcSerialization<span style="color:#f92672">.</span><span style="color:#a6e22e">deserialize</span><span style="color:#f92672">(</span>data<span style="color:#f92672">,</span> RpcResponse<span style="color:#f92672">.</span><span style="color:#a6e22e">class</span><span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>response <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>                    MessageProtocol<span style="color:#f92672">&lt;</span>RpcResponse<span style="color:#f92672">&gt;</span> protocol <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> MessageProtocol<span style="color:#f92672">&lt;&gt;();</span>
+</span></span><span style="display:flex;"><span>                    protocol<span style="color:#f92672">.</span><span style="color:#a6e22e">setHeader</span><span style="color:#f92672">(</span>header<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>                    protocol<span style="color:#f92672">.</span><span style="color:#a6e22e">setBody</span><span style="color:#f92672">(</span>response<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>                    out<span style="color:#f92672">.</span><span style="color:#a6e22e">add</span><span style="color:#f92672">(</span>protocol<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">break</span><span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span></code></pre></div><p>解码时，需得注意TCP粘包、拆包</p>
+<p>TCP面向数据流，没有数据包界限，也就是说消息无边界，客户端向服务端发送数据时，可能将一个完整的报文拆分成多个小报文进行发送，也可能将多个报文合并成一个大的报文进行发送。 因此就有了拆包和粘包。</p>
+<p>解决的根本手段，找出消息边界：</p>
+<p>1、消息长度固定。每个数据报文都有一个固定的长度。当接收方累计读取到固定长度的报文后，就认为已经获得一个完整的消息。当发送方的数据小于固定长度时，则需要空位补齐。
+消息定长法使用非常简单，但是缺点也非常明显，无法很好设定固定长度的值，如果长度太大会造成字节浪费，长度太小又会影响消息传输，所以在一般情况下消息定长法不会被采用。</p>
+<p>2、特定分隔符， 在每次发送报文的尾部加上特定分隔符，接收方就可以根据特殊分隔符进行消息拆分。 分隔符的选择一定要避免和消息体中字符相同，以免冲突。否则可能出现错误的消息拆分。比较推荐的做法是将消息进行编码，例如 base64 编码，然后可以选择 64 个编码字符之外的字符作为特定分隔符</p>
+<p>3、消息长度 + 消息内容，消息长度 + 消息内容是项目开发中最常用的一种协议，接收方根据消息长度来读取消息内容。</p>
+<p>本项目就是利用 “消息长度 + 消息内容” 方式解决TCP粘包、拆包问题的。所以在解码时要判断数据是否够长度读取，没有不够说明数据没有准备好，继续读取数据并解码，这里这种方式可以获取一个个完整的数据包。</p>
+<p><img src="/img/RPC/RPC3/3.png" alt=""></p>
+
+    </section>
+</article>
+
+<footer id="post-meta" class="clearfix">
+    <a href="https://twitter.com/Your%20Twitter%20account">
+    <img class="avatar" src="https://lzy175.github.io/images/avatar.png">
+    <div>
+        <span class="dark">ZhuoY Li</span>
+        <span>I&#39;m an blogger.</span>
+    </div>
+    </a>
+    <section id="sharing">
+        <a class="twitter" href="https://twitter.com/intent/tweet?text=https%3a%2f%2flzy175.github.io%2fposts%2f%25E6%2589%258B%25E5%2586%2599rpc%25E4%25B8%2589%2f - %e6%89%8b%e5%86%99RPC---%e8%87%aa%e5%ae%9a%e4%b9%89%e7%9a%84%e6%b6%88%e6%81%af%e5%8d%8f%e8%ae%ae%e5%92%8c%e7%bc%96%e8%a7%a3%e7%a0%81%e6%96%b9%e5%bc%8f by @Your%20Twitter%20account"><span class="icon-twitter"> tweet</span></a>
+
+<a class="facebook" href="#" onclick="
+    window.open(
+      'https://www.facebook.com/sharer/sharer.php?u='+encodeURIComponent(location.href),
+      'facebook-share-dialog',
+      'width=626,height=436');
+    return false;"><span class="icon-facebook-rect"> Share</span>
+</a>
+
+    </section>
+</footer>
+
+<div id="disqus_thread"></div>
+<script type="application/javascript">
+    window.disqus_config = function () {
+    
+    
+    
+    };
+    (function() {
+        if (["localhost", "127.0.0.1"].indexOf(window.location.hostname) != -1) {
+            document.getElementById('disqus_thread').innerHTML = 'Disqus comments not available by default when the website is previewed locally.';
+            return;
+        }
+        var d = document, s = d.createElement('script'); s.async = true;
+        s.src = '//' + "spf13" + '.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="https://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+<ul id="post-list" class="archive readmore">
+    <h3>Read more</h3>
+
+    
+    
+    
+        <li>
+            <a href="https://lzy175.github.io/posts/%E6%9C%89%E5%85%B3%E5%8D%95%E4%BE%8B%E6%A8%A1%E5%BC%8F%E5%92%8C%E4%BB%A3%E7%90%86%E6%A8%A1%E5%BC%8F%E7%9A%84%E5%AD%A6%E4%B9%A0/">有关单例模式和代理模式的学习<aside class="dates">Mar 18 2022</aside></a>
+        </li>
+    
+        <li>
+            <a href="https://lzy175.github.io/posts/jdbc%E5%AF%B9%E5%8F%8C%E4%BA%B2%E5%A7%94%E6%B4%BE%E6%A8%A1%E5%9E%8B%E7%9A%84%E7%A0%B4%E5%9D%8F%E5%88%86%E6%9E%90/">JDBC对双亲委派模型的破坏分析<aside class="dates">Mar 15 2022</aside></a>
+        </li>
+    
+        <li>
+            <a href="https://lzy175.github.io/posts/spring%E4%B8%ADbean%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F%E6%BA%90%E7%A0%81%E7%9A%84%E4%BA%86%E8%A7%A3/">Spring中bean生命周期源码的了解<aside class="dates">Jan 15 2022</aside></a>
+        </li>
+    
+        <li>
+            <a href="https://lzy175.github.io/posts/aqs%E6%BA%90%E7%A0%81%E5%88%9D%E6%8E%A2/">AQS源码初探<aside class="dates">Sep 12 2021</aside></a>
+        </li>
+    
+        <li>
+            <a href="https://lzy175.github.io/posts/redis%E5%AE%9E%E7%8E%B0%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81%E4%B8%8E%E5%85%B6%E4%BB%96%E5%AE%9E%E7%8E%B0%E6%96%B9%E6%A1%88/">Redis实现分布式锁与其他实现方案<aside class="dates">Aug 25 2021</aside></a>
+        </li>
+    
+        <li>
+            <a href="https://lzy175.github.io/posts/%E6%89%8B%E5%86%99rpc%E5%85%AD/">手写RPC---负载均衡<aside class="dates">Jul 30 2021</aside></a>
+        </li>
+    
+        <li>
+            <a href="https://lzy175.github.io/posts/%E5%AF%B9%E4%BA%8Eredis%E5%AE%9E%E9%99%85%E6%93%8D%E4%BD%9C%E7%9A%84%E5%AD%A6%E4%B9%A0/">对于redis实际操作的学习<aside class="dates">Jul 29 2021</aside></a>
+        </li>
+    
+        <li>
+            <a href="https://lzy175.github.io/posts/%E6%89%8B%E5%86%99rpc%E4%BA%94/">手写RPC---服务的发布与消费<aside class="dates">Jul 28 2021</aside></a>
+        </li>
+    
+        <li>
+            <a href="https://lzy175.github.io/posts/%E6%89%8B%E5%86%99rpc%E5%9B%9B/">手写RPC---序列化和反序列化<aside class="dates">Jul 25 2021</aside></a>
+        </li>
+    
+        <li>
+            <a href="https://lzy175.github.io/posts/%E6%89%8B%E5%86%99rpc%E4%BA%8C/">手写RPC---整体框架的构建<aside class="dates">Jul 20 2021</aside></a>
+        </li>
+    
+</ul>
+
+
+
+        <footer id="footer">
+    
+        <div id="social">
+
+	
+	
+    
+    <a class="symbol" href="https://www.dribbble.com/">
+        circledribble
+    </a>
+    
+    <a class="symbol" href="https://www.facebook.com/">
+        circlefacebook
+    </a>
+    
+    <a class="symbol" href="https://www.github.com/">
+        circlegithub
+    </a>
+    
+    <a class="symbol" href="https://www.twitter.com/">
+        circletwitterbird
+    </a>
+    
+
+
+</div>
+
+    
+    <p class="small">
+    
+        © Copyright 2022 ZhuoY Li
+    
+    </p>
+</footer>
+
+    </section>
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+<script src="https://lzy175.github.io/js/main.js"></script>
+<script src="https://lzy175.github.io/js/highlight.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+
+
+</body>
+</html>
