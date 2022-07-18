@@ -152,7 +152,7 @@ HSET key field value（存储：将哈希表 hash 中域 field 的值设置为 v
 <li>ZRANGE key start stop [WITHSCORES]（获取：返回有序集 key 中，指定区间内的成员，其中成员的位置按 score 值递增(从小到大)来排列）</li>
 <li>ZREM key member [member …]（删除：移除有序集 key 中的一个或多个成员，不存在的成员将被忽略）</li>
 </ol>
-<h2 id="使用redis有序集合实现跳表">使用redis有序集合实现跳表</h2>
+<h2 id="使用redis有序集合实现排行榜">使用redis有序集合实现排行榜</h2>
 <p>1、注入redis，将key声明为常量SCORE_RANK</p>
 <div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>    <span style="color:#a6e22e">@Autowired</span>
 </span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> StringRedisTemplate redisTemplate<span style="color:#f92672">;</span>
@@ -286,6 +286,10 @@ HSET key field value（存储：将哈希表 hash 中域 field 的值设置为 v
     
         <li>
             <a href="https://lzy175.github.io/posts/redis%E5%AE%9E%E7%8E%B0%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81%E4%B8%8E%E5%85%B6%E4%BB%96%E5%AE%9E%E7%8E%B0%E6%96%B9%E6%A1%88/">Redis实现分布式锁与其他实现方案<aside class="dates">Aug 25 2021</aside></a>
+        </li>
+    
+        <li>
+            <a href="https://lzy175.github.io/posts/%E6%89%8B%E5%86%99rpc%E4%B8%80/">手写RPC---RPC的初步认识<aside class="dates">Jul 18 2021</aside></a>
         </li>
     
         <li>
