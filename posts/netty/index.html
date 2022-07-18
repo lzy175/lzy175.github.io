@@ -31,8 +31,8 @@
 package com.lzy.socketDemo; import com.sun.org.apache.xpath.internal.objects.XString; import java.io.*; import java.net.Inet4Address; import java.net.InetSocketAddress; import java.net.Socket; import java.net.UnknownHostException; /** * @ClassName: Client * @Description: socket客户端 * @author: lzy * @date: 2022/7/11 11:07 */ public class Client { public static void main(String[] args) throws IOException { Socket socket = new Socket(); // 设置超时时间 socket.setSoTimeout(8000); socket.connect(new InetSocketAddress(Inet4Address.getLocalHost(), 2000), 8000); System.out.println(&#34;已发起服务器连接，并进入后续流程～&#34;); System.out.println(&#34;客户端信息：&#34; &#43; socket.getLocalAddress() &#43; &#34; P:&#34; &#43; socket." />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://lzy175.github.io/posts/netty/" /><meta property="article:section" content="posts" />
-
-
+<meta property="article:published_time" content="2021-06-22T17:42:29+08:00" />
+<meta property="article:modified_time" content="2021-06-22T17:42:29+08:00" />
 
 
 
@@ -43,8 +43,8 @@ package com.lzy.socketDemo; import com.sun.org.apache.xpath.internal.objects.XSt
 根据OSI七层模型，计算机通信实际传输以二进制形式的数据在物理层进行，所以在通信中，需要通过序列化方式，将传输的对象转化为二进制形式流，这种在网络中以二进制形式传输的流就是IO流，对于应用端来说是输入流，对于服务端来说是输出流。
 使用计算机的不同端口，可以编写一个IO通信的简单Demo。
 客户端代码
-package com.lzy.socketDemo; import com.sun.org.apache.xpath.internal.objects.XString; import java.io.*; import java.net.Inet4Address; import java.net.InetSocketAddress; import java.net.Socket; import java.net.UnknownHostException; /** * @ClassName: Client * @Description: socket客户端 * @author: lzy * @date: 2022/7/11 11:07 */ public class Client { public static void main(String[] args) throws IOException { Socket socket = new Socket(); // 设置超时时间 socket.setSoTimeout(8000); socket.connect(new InetSocketAddress(Inet4Address.getLocalHost(), 2000), 8000); System.out.println(&#34;已发起服务器连接，并进入后续流程～&#34;); System.out.println(&#34;客户端信息：&#34; &#43; socket.getLocalAddress() &#43; &#34; P:&#34; &#43; socket.">
-
+package com.lzy.socketDemo; import com.sun.org.apache.xpath.internal.objects.XString; import java.io.*; import java.net.Inet4Address; import java.net.InetSocketAddress; import java.net.Socket; import java.net.UnknownHostException; /** * @ClassName: Client * @Description: socket客户端 * @author: lzy * @date: 2022/7/11 11:07 */ public class Client { public static void main(String[] args) throws IOException { Socket socket = new Socket(); // 设置超时时间 socket.setSoTimeout(8000); socket.connect(new InetSocketAddress(Inet4Address.getLocalHost(), 2000), 8000); System.out.println(&#34;已发起服务器连接，并进入后续流程～&#34;); System.out.println(&#34;客户端信息：&#34; &#43; socket.getLocalAddress() &#43; &#34; P:&#34; &#43; socket."><meta itemprop="datePublished" content="2021-06-22T17:42:29+08:00" />
+<meta itemprop="dateModified" content="2021-06-22T17:42:29+08:00" />
 <meta itemprop="wordCount" content="988">
 <meta itemprop="keywords" content="" />
 <meta name="twitter:card" content="summary"/>
@@ -81,7 +81,7 @@ package com.lzy.socketDemo; import com.sun.org.apache.xpath.internal.objects.XSt
         <h1>IO与Netty实操问题</h1>
         <h2 class="subtitle"></h2>
         <h2 class="headline">
-        January 1, 0001
+        June 22, 2021
         <br>
         
         </h2>
@@ -617,6 +617,10 @@ package com.lzy.socketDemo; import com.sun.org.apache.xpath.internal.objects.XSt
         </li>
     
         <li>
+            <a href="https://lzy175.github.io/posts/%E6%89%8B%E5%86%99rpc%E4%B8%83/">手写RPC---网络传输<aside class="dates">Aug 10 2021</aside></a>
+        </li>
+    
+        <li>
             <a href="https://lzy175.github.io/posts/%E6%89%8B%E5%86%99rpc%E5%85%AD/">手写RPC---负载均衡<aside class="dates">Jul 30 2021</aside></a>
         </li>
     
@@ -630,10 +634,6 @@ package com.lzy.socketDemo; import com.sun.org.apache.xpath.internal.objects.XSt
     
         <li>
             <a href="https://lzy175.github.io/posts/%E6%89%8B%E5%86%99rpc%E5%9B%9B/">手写RPC---序列化和反序列化<aside class="dates">Jul 25 2021</aside></a>
-        </li>
-    
-        <li>
-            <a href="https://lzy175.github.io/posts/%E6%89%8B%E5%86%99rpc%E4%B8%89/">手写RPC---自定义的消息协议和编解码方式<aside class="dates">Jul 23 2021</aside></a>
         </li>
     
 </ul>

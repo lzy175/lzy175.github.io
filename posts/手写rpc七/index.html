@@ -27,16 +27,16 @@
 package com.rrtv.rpc.server.transport; import java.net.InetAddress; /** * @Date: 2021/7/24 22:22 */ @Slf4j public class NettyRpcServer implements RpcServer { //开启服务 @Override public void start(int port) { //监听端口 EventLoopGroup boss = new NioEventLoopGroup(); //这个是用来处理工作的 EventLoopGroup worker = new NioEventLoopGroup(); try { String serverAddress = InetAddress.getLocalHost().getHostAddress(); ServerBootstrap bootstrap = new ServerBootstrap(); bootstrap.group(boss, worker) .channel(NioServerSocketChannel.class) .childHandler(new ChannelInitializer&lt;SocketChannel&gt;() { @Override protected void initChannel(SocketChannel socketChannel) throws Exception { socketChannel.pipeline() // 协议编码 .addLast(new RpcEncoder()) // 协议解码 ." />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://lzy175.github.io/posts/%E6%89%8B%E5%86%99rpc%E4%B8%83/" /><meta property="article:section" content="posts" />
-
-
+<meta property="article:published_time" content="2021-08-10T17:42:29+08:00" />
+<meta property="article:modified_time" content="2021-08-10T17:42:29+08:00" />
 
 
 
 <meta itemprop="name" content="手写RPC---网络传输">
 <meta itemprop="description" content="网络传输部分使用netty，这部分就是将先前的代码整合，作为handler，处理完毕后在网络中传输。
 服务端接收和发送：
-package com.rrtv.rpc.server.transport; import java.net.InetAddress; /** * @Date: 2021/7/24 22:22 */ @Slf4j public class NettyRpcServer implements RpcServer { //开启服务 @Override public void start(int port) { //监听端口 EventLoopGroup boss = new NioEventLoopGroup(); //这个是用来处理工作的 EventLoopGroup worker = new NioEventLoopGroup(); try { String serverAddress = InetAddress.getLocalHost().getHostAddress(); ServerBootstrap bootstrap = new ServerBootstrap(); bootstrap.group(boss, worker) .channel(NioServerSocketChannel.class) .childHandler(new ChannelInitializer&lt;SocketChannel&gt;() { @Override protected void initChannel(SocketChannel socketChannel) throws Exception { socketChannel.pipeline() // 协议编码 .addLast(new RpcEncoder()) // 协议解码 .">
-
+package com.rrtv.rpc.server.transport; import java.net.InetAddress; /** * @Date: 2021/7/24 22:22 */ @Slf4j public class NettyRpcServer implements RpcServer { //开启服务 @Override public void start(int port) { //监听端口 EventLoopGroup boss = new NioEventLoopGroup(); //这个是用来处理工作的 EventLoopGroup worker = new NioEventLoopGroup(); try { String serverAddress = InetAddress.getLocalHost().getHostAddress(); ServerBootstrap bootstrap = new ServerBootstrap(); bootstrap.group(boss, worker) .channel(NioServerSocketChannel.class) .childHandler(new ChannelInitializer&lt;SocketChannel&gt;() { @Override protected void initChannel(SocketChannel socketChannel) throws Exception { socketChannel.pipeline() // 协议编码 .addLast(new RpcEncoder()) // 协议解码 ."><meta itemprop="datePublished" content="2021-08-10T17:42:29+08:00" />
+<meta itemprop="dateModified" content="2021-08-10T17:42:29+08:00" />
 <meta itemprop="wordCount" content="321">
 <meta itemprop="keywords" content="" />
 <meta name="twitter:card" content="summary"/>
@@ -69,7 +69,7 @@ package com.rrtv.rpc.server.transport; import java.net.InetAddress; /** * @Date:
         <h1>手写RPC---网络传输</h1>
         <h2 class="subtitle"></h2>
         <h2 class="headline">
-        January 1, 0001
+        August 10, 2021
         <br>
         
         </h2>

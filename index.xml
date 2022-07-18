@@ -102,6 +102,17 @@ boolean result = jedis.setnx(&amp;#34;lock-key&amp;#34;,true)== 1L; if (result) 
     </item>
     
     <item>
+      <title>手写RPC---网络传输</title>
+      <link>https://lzy175.github.io/posts/%E6%89%8B%E5%86%99rpc%E4%B8%83/</link>
+      <pubDate>Tue, 10 Aug 2021 17:42:29 +0800</pubDate>
+      
+      <guid>https://lzy175.github.io/posts/%E6%89%8B%E5%86%99rpc%E4%B8%83/</guid>
+      <description>网络传输部分使用netty，这部分就是将先前的代码整合，作为handler，处理完毕后在网络中传输。
+服务端接收和发送：
+package com.rrtv.rpc.server.transport; import java.net.InetAddress; /** * @Date: 2021/7/24 22:22 */ @Slf4j public class NettyRpcServer implements RpcServer { //开启服务 @Override public void start(int port) { //监听端口 EventLoopGroup boss = new NioEventLoopGroup(); //这个是用来处理工作的 EventLoopGroup worker = new NioEventLoopGroup(); try { String serverAddress = InetAddress.getLocalHost().getHostAddress(); ServerBootstrap bootstrap = new ServerBootstrap(); bootstrap.group(boss, worker) .channel(NioServerSocketChannel.class) .childHandler(new ChannelInitializer&amp;lt;SocketChannel&amp;gt;() { @Override protected void initChannel(SocketChannel socketChannel) throws Exception { socketChannel.pipeline() // 协议编码 .addLast(new RpcEncoder()) // 协议解码 .</description>
+    </item>
+    
+    <item>
       <title>手写RPC---负载均衡</title>
       <link>https://lzy175.github.io/posts/%E6%89%8B%E5%86%99rpc%E5%85%AD/</link>
       <pubDate>Fri, 30 Jul 2021 17:42:29 +0800</pubDate>
@@ -193,7 +204,7 @@ org.springframework.boot.autoconfigure.EnableAutoConfiguration=com.rrtv.rpc.clie
     <item>
       <title>手写RPC---RPC的初步认识</title>
       <link>https://lzy175.github.io/posts/%E6%89%8B%E5%86%99rpc%E4%B8%80/</link>
-      <pubDate>Sun, 18 Jul 2021 14:32:20 +0800</pubDate>
+      <pubDate>Sun, 18 Jul 2021 17:42:29 +0800</pubDate>
       
       <guid>https://lzy175.github.io/posts/%E6%89%8B%E5%86%99rpc%E4%B8%80/</guid>
       <description>rpc是指远程过程调用，关注的一般是远程方法调用，微服务会将一个项目服务分成几个规模较小的服务，把这些服务分别部署在不同的服务器中，来达到一种解耦合提高效率的目的，但是不同的服务之间一定会有交互，通过这种交互来完成系统的整体性，这种交互过程有时候就是一个服务得区调用另一个服务的方法，就是在一台服务器上，调用另一台服务器的某个方法，RPC就是这样一种框架，通过RPC可以在本地计算机上调用远程计算机上某个服务的方法。
@@ -234,6 +245,21 @@ server stub：接受客户端发送过来的消息，消息解包并调用本地
     </item>
     
     <item>
+      <title>IO与Netty实操问题</title>
+      <link>https://lzy175.github.io/posts/netty/</link>
+      <pubDate>Tue, 22 Jun 2021 17:42:29 +0800</pubDate>
+      
+      <guid>https://lzy175.github.io/posts/netty/</guid>
+      <description>IO与Netty实操问题 （分享以实际操作中遇到的问题为主，一些基础知识不会过多陈述）
+(34条消息) 基于NIO的Socket通信(使用Java NIO的综合示例讲解)_Java新生代的博客-CSDN博客_java nio socket
+两台计算机之间的通信，本质上可以理解为两台不同主机的进程之间的通信，简单的例子就是浏览器从服务器端接收网页、文件等。
+根据OSI七层模型，计算机通信实际传输以二进制形式的数据在物理层进行，所以在通信中，需要通过序列化方式，将传输的对象转化为二进制形式流，这种在网络中以二进制形式传输的流就是IO流，对于应用端来说是输入流，对于服务端来说是输出流。
+使用计算机的不同端口，可以编写一个IO通信的简单Demo。
+客户端代码
+package com.lzy.socketDemo; import com.sun.org.apache.xpath.internal.objects.XString; import java.io.*; import java.net.Inet4Address; import java.net.InetSocketAddress; import java.net.Socket; import java.net.UnknownHostException; /** * @ClassName: Client * @Description: socket客户端 * @author: lzy * @date: 2022/7/11 11:07 */ public class Client { public static void main(String[] args) throws IOException { Socket socket = new Socket(); // 设置超时时间 socket.setSoTimeout(8000); socket.connect(new InetSocketAddress(Inet4Address.getLocalHost(), 2000), 8000); System.out.println(&amp;#34;已发起服务器连接，并进入后续流程～&amp;#34;); System.out.println(&amp;#34;客户端信息：&amp;#34; + socket.getLocalAddress() + &amp;#34; P:&amp;#34; + socket.</description>
+    </item>
+    
+    <item>
       <title>多路复用IO的底层实现及空轮询bug</title>
       <link>https://lzy175.github.io/posts/%E5%A4%9A%E8%B7%AF%E5%A4%8D%E7%94%A8io%E7%9A%84%E5%BA%95%E5%B1%82%E5%AE%9E%E7%8E%B0%E5%8F%8A%E7%A9%BA%E8%BD%AE%E8%AF%A2bug/</link>
       <pubDate>Thu, 10 Jun 2021 10:24:48 +0800</pubDate>
@@ -254,21 +280,6 @@ epoll_create方法，向内核申请一个fd文件描述符作为内核事件监
 jdk的epoll空轮询bug 使用IO复用，Linux下一般默认就是epoll，Java NIO在Linux下默认也是epoll机制，但是JDK中epoll的实现却是有漏洞的，其中最有名的java nio epoll bug就是即使是关注的select轮询事件返回数量为0，NIO照样不断的从select本应该阻塞的Selector.select()/Selector.select(timeout)中wake up出来，导致CPU 100%问题。
 空轮询的伪代码：
 // 轮询处理 while (true) { if (socket.isOpen()) { //在注册的键中选择已准备就绪的事件（这里可能会出现空轮询bug） selector.select(); //已选择键集 Set&amp;lt;SelectionKey&amp;gt; keys = selector.selectedKeys(); Iterator&amp;lt;SelectionKey&amp;gt; iterator = keys.iterator(); //处理准备就绪的事件 while (iterator.hasNext()) { /** 相关功能代码 */ } } } 在上述代码中，在调用selector.select()时，如果没有对应事件发生，线程应该阻塞在这，但是实际情况并不会，线程继续执行，selector.select()返回numKeys是0，所以下面本应该对key值进行遍历的事件处理根本执行不了，又回到最上面的while(true)循环，循环往复，不断的轮询，直到linux系统出现100%的CPU情况，其它执行任务干不了活，最终导致程序崩溃。有意思的是，这个bug的产生原因到现在还在不断甩锅中，linux方面说是jdk的问题，jdk方面说是linux的epoll的问题。</description>
-    </item>
-    
-    <item>
-      <title>IO与Netty实操问题</title>
-      <link>https://lzy175.github.io/posts/netty/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://lzy175.github.io/posts/netty/</guid>
-      <description>IO与Netty实操问题 （分享以实际操作中遇到的问题为主，一些基础知识不会过多陈述）
-(34条消息) 基于NIO的Socket通信(使用Java NIO的综合示例讲解)_Java新生代的博客-CSDN博客_java nio socket
-两台计算机之间的通信，本质上可以理解为两台不同主机的进程之间的通信，简单的例子就是浏览器从服务器端接收网页、文件等。
-根据OSI七层模型，计算机通信实际传输以二进制形式的数据在物理层进行，所以在通信中，需要通过序列化方式，将传输的对象转化为二进制形式流，这种在网络中以二进制形式传输的流就是IO流，对于应用端来说是输入流，对于服务端来说是输出流。
-使用计算机的不同端口，可以编写一个IO通信的简单Demo。
-客户端代码
-package com.lzy.socketDemo; import com.sun.org.apache.xpath.internal.objects.XString; import java.io.*; import java.net.Inet4Address; import java.net.InetSocketAddress; import java.net.Socket; import java.net.UnknownHostException; /** * @ClassName: Client * @Description: socket客户端 * @author: lzy * @date: 2022/7/11 11:07 */ public class Client { public static void main(String[] args) throws IOException { Socket socket = new Socket(); // 设置超时时间 socket.setSoTimeout(8000); socket.connect(new InetSocketAddress(Inet4Address.getLocalHost(), 2000), 8000); System.out.println(&amp;#34;已发起服务器连接，并进入后续流程～&amp;#34;); System.out.println(&amp;#34;客户端信息：&amp;#34; + socket.getLocalAddress() + &amp;#34; P:&amp;#34; + socket.</description>
     </item>
     
     <item>
@@ -317,17 +328,6 @@ RPC框架的基本架构部件是三个，注册中心、客户端和服务端�
 7、server stub将返回结果进行编码并发送给消费方；
 8、client stub接受消息进行解码；
 9、服务消费方（client）得到结果。</description>
-    </item>
-    
-    <item>
-      <title>手写RPC---网络传输</title>
-      <link>https://lzy175.github.io/posts/%E6%89%8B%E5%86%99rpc%E4%B8%83/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://lzy175.github.io/posts/%E6%89%8B%E5%86%99rpc%E4%B8%83/</guid>
-      <description>网络传输部分使用netty，这部分就是将先前的代码整合，作为handler，处理完毕后在网络中传输。
-服务端接收和发送：
-package com.rrtv.rpc.server.transport; import java.net.InetAddress; /** * @Date: 2021/7/24 22:22 */ @Slf4j public class NettyRpcServer implements RpcServer { //开启服务 @Override public void start(int port) { //监听端口 EventLoopGroup boss = new NioEventLoopGroup(); //这个是用来处理工作的 EventLoopGroup worker = new NioEventLoopGroup(); try { String serverAddress = InetAddress.getLocalHost().getHostAddress(); ServerBootstrap bootstrap = new ServerBootstrap(); bootstrap.group(boss, worker) .channel(NioServerSocketChannel.class) .childHandler(new ChannelInitializer&amp;lt;SocketChannel&amp;gt;() { @Override protected void initChannel(SocketChannel socketChannel) throws Exception { socketChannel.pipeline() // 协议编码 .addLast(new RpcEncoder()) // 协议解码 .</description>
     </item>
     
   </channel>
