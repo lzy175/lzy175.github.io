@@ -30,8 +30,8 @@ SET key value（存储：将字符串值 value 关联到 key） GET key（获取
 HSET key field value（存储：将哈希表 hash 中域 field 的值设置为 value） HGET key field（获取：获取指定的field对应的值） HDEL key field（删除：删除哈希表 key 中的一个或多个指定域，不存在的域将被忽略） HMSET key field value [field value …]（同时将多个 field-value (域-值)对设置到哈希表 key 中） HMGET key field [field …]（返回哈希表 key 中，一个或多个给定域的值） HGETALL key（返回哈希表 key 中，所有的域和值） 列表类型 list ：（linkedlist格式。支持重复元素） redis 列表是简单的字符串列表，按照插入顺序排序。你可以添加一个元素导列表的头部（左边）或者尾部（右边）。它的底层实际是个链表。 常用命令操作：" />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://lzy175.github.io/posts/%E5%AF%B9%E4%BA%8Eredis%E5%AE%9E%E9%99%85%E6%93%8D%E4%BD%9C%E7%9A%84%E5%AD%A6%E4%B9%A0/" /><meta property="article:section" content="posts" />
-<meta property="article:published_time" content="2021-07-29T16:56:09+08:00" />
-<meta property="article:modified_time" content="2021-07-29T16:56:09+08:00" />
+<meta property="article:published_time" content="2021-08-12T16:56:09+08:00" />
+<meta property="article:modified_time" content="2021-08-12T16:56:09+08:00" />
 
 
 
@@ -41,8 +41,8 @@ redis存储的是：key,value格式的数据，其中key都是字符串，value�
 String类型 string是redis最基本的类型，你可以理解成与Memcached一模一样的类型，一个key对应一个value； string类型是二进制安全的。意思是redis的string可以包含任何数据。如jpg图片或者序列化的对象 ； string类型是Redis最基本的数据类型，一个redis中字符串value最多可以是512M；
 常用命令操作：
 SET key value（存储：将字符串值 value 关联到 key） GET key（获取：返回与键 key 相关联的字符串值） DEL key（删除：删除给定的 key ） APPEND key value（ APPEND 命令将把 value 追加到键 key 现有值的末尾，没有 key 就自动添加） STRLEN key（返回键 key 储存的字符串值的长度） 哈希类型 hash ： (map格式) redis的hash 是一个键值对集合； redis hash是一个string类型的field和value的映射表，hash特别适合用于存储对象； 类似Java里面的Map&lt;String,Object&gt;； 常用命令操作：
-HSET key field value（存储：将哈希表 hash 中域 field 的值设置为 value） HGET key field（获取：获取指定的field对应的值） HDEL key field（删除：删除哈希表 key 中的一个或多个指定域，不存在的域将被忽略） HMSET key field value [field value …]（同时将多个 field-value (域-值)对设置到哈希表 key 中） HMGET key field [field …]（返回哈希表 key 中，一个或多个给定域的值） HGETALL key（返回哈希表 key 中，所有的域和值） 列表类型 list ：（linkedlist格式。支持重复元素） redis 列表是简单的字符串列表，按照插入顺序排序。你可以添加一个元素导列表的头部（左边）或者尾部（右边）。它的底层实际是个链表。 常用命令操作："><meta itemprop="datePublished" content="2021-07-29T16:56:09+08:00" />
-<meta itemprop="dateModified" content="2021-07-29T16:56:09+08:00" />
+HSET key field value（存储：将哈希表 hash 中域 field 的值设置为 value） HGET key field（获取：获取指定的field对应的值） HDEL key field（删除：删除哈希表 key 中的一个或多个指定域，不存在的域将被忽略） HMSET key field value [field value …]（同时将多个 field-value (域-值)对设置到哈希表 key 中） HMGET key field [field …]（返回哈希表 key 中，一个或多个给定域的值） HGETALL key（返回哈希表 key 中，所有的域和值） 列表类型 list ：（linkedlist格式。支持重复元素） redis 列表是简单的字符串列表，按照插入顺序排序。你可以添加一个元素导列表的头部（左边）或者尾部（右边）。它的底层实际是个链表。 常用命令操作："><meta itemprop="datePublished" content="2021-08-12T16:56:09+08:00" />
+<meta itemprop="dateModified" content="2021-08-12T16:56:09+08:00" />
 <meta itemprop="wordCount" content="355">
 <meta itemprop="keywords" content="" />
 <meta name="twitter:card" content="summary"/>
@@ -78,7 +78,7 @@ HSET key field value（存储：将哈希表 hash 中域 field 的值设置为 v
         <h1>对于redis实际操作的学习</h1>
         <h2 class="subtitle"></h2>
         <h2 class="headline">
-        July 29, 2021
+        August 12, 2021
         <br>
         
         </h2>

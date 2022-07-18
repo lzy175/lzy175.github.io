@@ -102,6 +102,20 @@ boolean result = jedis.setnx(&amp;#34;lock-key&amp;#34;,true)== 1L; if (result) 
     </item>
     
     <item>
+      <title>对于redis实际操作的学习</title>
+      <link>https://lzy175.github.io/posts/%E5%AF%B9%E4%BA%8Eredis%E5%AE%9E%E9%99%85%E6%93%8D%E4%BD%9C%E7%9A%84%E5%AD%A6%E4%B9%A0/</link>
+      <pubDate>Thu, 12 Aug 2021 16:56:09 +0800</pubDate>
+      
+      <guid>https://lzy175.github.io/posts/%E5%AF%B9%E4%BA%8Eredis%E5%AE%9E%E9%99%85%E6%93%8D%E4%BD%9C%E7%9A%84%E5%AD%A6%E4%B9%A0/</guid>
+      <description>本篇博客仅记录笔者操作过程中使用到的命令，对于理论知识比如redis五大数据类型的底层结构，redis单线程相关知识，redis持久化等等知识点不做详解，有兴趣的读者可自行百度或者查看笔者的其他相关博客。
+redis存储的是：key,value格式的数据，其中key都是字符串，value有5种不同的数据结构：
+String类型 string是redis最基本的类型，你可以理解成与Memcached一模一样的类型，一个key对应一个value； string类型是二进制安全的。意思是redis的string可以包含任何数据。如jpg图片或者序列化的对象 ； string类型是Redis最基本的数据类型，一个redis中字符串value最多可以是512M；
+常用命令操作：
+SET key value（存储：将字符串值 value 关联到 key） GET key（获取：返回与键 key 相关联的字符串值） DEL key（删除：删除给定的 key ） APPEND key value（ APPEND 命令将把 value 追加到键 key 现有值的末尾，没有 key 就自动添加） STRLEN key（返回键 key 储存的字符串值的长度） 哈希类型 hash ： (map格式) redis的hash 是一个键值对集合； redis hash是一个string类型的field和value的映射表，hash特别适合用于存储对象； 类似Java里面的Map&amp;lt;String,Object&amp;gt;； 常用命令操作：
+HSET key field value（存储：将哈希表 hash 中域 field 的值设置为 value） HGET key field（获取：获取指定的field对应的值） HDEL key field（删除：删除哈希表 key 中的一个或多个指定域，不存在的域将被忽略） HMSET key field value [field value …]（同时将多个 field-value (域-值)对设置到哈希表 key 中） HMGET key field [field …]（返回哈希表 key 中，一个或多个给定域的值） HGETALL key（返回哈希表 key 中，所有的域和值） 列表类型 list ：（linkedlist格式。支持重复元素） redis 列表是简单的字符串列表，按照插入顺序排序。你可以添加一个元素导列表的头部（左边）或者尾部（右边）。它的底层实际是个链表。 常用命令操作：</description>
+    </item>
+    
+    <item>
       <title>手写RPC---网络传输</title>
       <link>https://lzy175.github.io/posts/%E6%89%8B%E5%86%99rpc%E4%B8%83/</link>
       <pubDate>Tue, 10 Aug 2021 17:42:29 +0800</pubDate>
@@ -123,20 +137,6 @@ package com.rrtv.rpc.server.transport; import java.net.InetAddress; /** * @Date:
 首先，消费的实现已经创建了动态代理实现，所以真的调用方法在动态代理的invoke里面，
 invoke的第一步就调用了discoverService.discovery方法，目的是根据服务名称和版本号找到zk中哪些服务端有这个服务。代码如下：
 package com.rrtv.rpc.core.discovery; /** * @Classname ZookeeperRegistryService * @Description * @Date 2021/7/15 14:35 */ @Slf4j public class ZookeeperDiscoveryService implements DiscoveryService { public static final int BASE_SLEEP_TIME_MS = 1000; public static final int MAX_RETRIES = 3; public static final String ZK_BASE_PATH = &amp;#34;/demo_rpc&amp;#34;; private ServiceDiscovery&amp;lt;ServiceInfo&amp;gt; serviceDiscovery; private LoadBalance loadBalance; //构造方法，输入为负载均衡策略 和zk的地址 public ZookeeperDiscoveryService(String registryAddr, LoadBalance loadBalance) { this.loadBalance = loadBalance; try { //zookeeper的东西，使用静态工程方法创建客户端，registryAddr是服务器列表 CuratorFramework client = CuratorFrameworkFactory.newClient(registryAddr, new ExponentialBackoffRetry(BASE_SLEEP_TIME_MS, MAX_RETRIES)); //zk客户端启动 client.</description>
-    </item>
-    
-    <item>
-      <title>对于redis实际操作的学习</title>
-      <link>https://lzy175.github.io/posts/%E5%AF%B9%E4%BA%8Eredis%E5%AE%9E%E9%99%85%E6%93%8D%E4%BD%9C%E7%9A%84%E5%AD%A6%E4%B9%A0/</link>
-      <pubDate>Thu, 29 Jul 2021 16:56:09 +0800</pubDate>
-      
-      <guid>https://lzy175.github.io/posts/%E5%AF%B9%E4%BA%8Eredis%E5%AE%9E%E9%99%85%E6%93%8D%E4%BD%9C%E7%9A%84%E5%AD%A6%E4%B9%A0/</guid>
-      <description>本篇博客仅记录笔者操作过程中使用到的命令，对于理论知识比如redis五大数据类型的底层结构，redis单线程相关知识，redis持久化等等知识点不做详解，有兴趣的读者可自行百度或者查看笔者的其他相关博客。
-redis存储的是：key,value格式的数据，其中key都是字符串，value有5种不同的数据结构：
-String类型 string是redis最基本的类型，你可以理解成与Memcached一模一样的类型，一个key对应一个value； string类型是二进制安全的。意思是redis的string可以包含任何数据。如jpg图片或者序列化的对象 ； string类型是Redis最基本的数据类型，一个redis中字符串value最多可以是512M；
-常用命令操作：
-SET key value（存储：将字符串值 value 关联到 key） GET key（获取：返回与键 key 相关联的字符串值） DEL key（删除：删除给定的 key ） APPEND key value（ APPEND 命令将把 value 追加到键 key 现有值的末尾，没有 key 就自动添加） STRLEN key（返回键 key 储存的字符串值的长度） 哈希类型 hash ： (map格式) redis的hash 是一个键值对集合； redis hash是一个string类型的field和value的映射表，hash特别适合用于存储对象； 类似Java里面的Map&amp;lt;String,Object&amp;gt;； 常用命令操作：
-HSET key field value（存储：将哈希表 hash 中域 field 的值设置为 value） HGET key field（获取：获取指定的field对应的值） HDEL key field（删除：删除哈希表 key 中的一个或多个指定域，不存在的域将被忽略） HMSET key field value [field value …]（同时将多个 field-value (域-值)对设置到哈希表 key 中） HMGET key field [field …]（返回哈希表 key 中，一个或多个给定域的值） HGETALL key（返回哈希表 key 中，所有的域和值） 列表类型 list ：（linkedlist格式。支持重复元素） redis 列表是简单的字符串列表，按照插入顺序排序。你可以添加一个元素导列表的头部（左边）或者尾部（右边）。它的底层实际是个链表。 常用命令操作：</description>
     </item>
     
     <item>
@@ -245,6 +245,44 @@ server stub：接受客户端发送过来的消息，消息解包并调用本地
     </item>
     
     <item>
+      <title>对于RPC框架的初步理解</title>
+      <link>https://lzy175.github.io/posts/%E5%AF%B9%E4%BA%8Erpc%E6%A1%86%E6%9E%B6%E7%9A%84%E5%88%9D%E6%AD%A5%E7%90%86%E8%A7%A3/</link>
+      <pubDate>Mon, 28 Jun 2021 16:56:09 +0800</pubDate>
+      
+      <guid>https://lzy175.github.io/posts/%E5%AF%B9%E4%BA%8Erpc%E6%A1%86%E6%9E%B6%E7%9A%84%E5%88%9D%E6%AD%A5%E7%90%86%E8%A7%A3/</guid>
+      <description>rpc是指远程过程调用，关注的一般是远程方法调用，微服务会将一个项目服务分成几个规模较小的服务，把这些服务分别部署在不同的服务器中，来达到一种解耦合提高效率的目的，但是不同的服务之间一定会有交互，通过这种交互来完成系统的整体性，这种交互过程有时候就是一个服务得区调用另一个服务的方法，就是在一台服务器上，调用另一台服务器的某个方法，RPC就是这样一种框架，通过RPC可以在本地计算机上调用远程计算机上某个服务的方法。
+RPC通常包括两类协议：1、传输协议和 序列化协议
+传输协议：
+著名的grpc，底层使用的就是http2协议；dubbo一类的是使用自定义报文的tcp协议。
+序列化协议
+基于文本编码的josn协议；二进制编码的protobuf、hession协议；针对java高性能高吞吐量的kryo和ftc协议。
+既然有HTTP，为啥还要用RPC进行服务调用？
+他们俩到底是哪里有差别？
+五层协议体系：应用层，传输层，网络层，数据链路层，物理层。
+应用层的任务是通过应用进程之间的交互来完成特定的网络应用。http就是应用层协议，使用TCP/IP通信协议来传递数据。
+传输层的主要任务就是为两台主机之间的通信提供通用的数据传输服务。TCP就是传输层协议。
+关键的差别就在于HTTP使用的TCP协议，RPC网络使用的自定义报文的TCP协议：
+http1.1协议的TCP报文包含太多在传输过程中可能无用的信息，使用自定的报文进行传输就会避免这个问题，极大减轻了数据传输的开销。在这点上RPC直接是提高了信息交换效率。除此之外，RPC框架还提供了&amp;quot;服务自动注册与发现&amp;quot;、“智能负载均衡”，“可视化的服务治理和运维”，“运行期流量调度”等功能。
+RPC框架的基本架构部件是三个，注册中心、客户端和服务端：
+三者交互方式：
+1、服务端启动后，会将他提供的服务列表发布到注册中心，客户端向注册中心订阅服务地址；
+2、客户端会通过本地代理模块Proxy调用服务端，Proxy模块负责将方法。参数等数据转化为网络字节流；
+3、客户端从服务列表选取其中一个服务地址（通过负载均衡算法），并将数据通过网络发送给服务端；
+4、服务端收到数据后进行解码，得到请求信息；
+5、服务端根据解码后的请求信息调用对应的服务，然后将调用结果返回给客户端。
+交互过程：
+1、客户端（client）以本地调用方式调用服务；
+2、client stub接受到调用后负责将方法、参数封装成能够进行网络传输的消息体；
+3、client stub将消息进行编码并发送到服务端；
+4、server stub收到消息后进行解码；
+5、server stub根据解码结果调用本地服务；
+6、本地服务执行方法并将结果返回给server stub；
+7、server stub将返回结果进行编码并发送给消费方；
+8、client stub接受消息进行解码；
+9、服务消费方（client）得到结果。</description>
+    </item>
+    
+    <item>
       <title>IO与Netty实操问题</title>
       <link>https://lzy175.github.io/posts/netty/</link>
       <pubDate>Tue, 22 Jun 2021 17:42:29 +0800</pubDate>
@@ -290,44 +328,6 @@ jdk的epoll空轮询bug 使用IO复用，Linux下一般默认就是epoll，Java 
       <guid>https://lzy175.github.io/posts/%E4%B8%89%E7%A7%8D%E6%97%B6%E9%97%B4%E5%A4%8D%E6%9D%82%E5%BA%A6%E4%B8%BAlogn%E7%9A%84%E6%8E%92%E5%BA%8F%E7%AE%97%E6%B3%95/</guid>
       <description>/** * @ClassName: SortInterface * @Description: 排序方法接口，所有排序方法必须实现这一接口 * @author: lzy * @date: 2020/12/12 9:08 */ public interface SortInterface { void sort(int[] nums); } 归并排序，这三个排序算法中唯一一个稳定的：
 /** * @ClassName: MergeSort * @Description: 归并排序 * @author: lzy * @date: 2020/12/12 9:55 */ public class MergeSort implements SortInterface{ @Override public void sort(int[] nums) { Merge(nums, 0 , nums.length-1); } public void Merge(int[] nums , int left , int right){ if(left &amp;gt;= right){ return; } int index = (left + right)/2; Merge(nums , left , index); Merge(nums, index+1, right); MergeNums(nums , left , index , right); } public void MergeNums(int[] nums , int left , int index , int right){ int[] tmp = new int[right - left + 1]; int i = left; int j = index+1; int k = 0; while(i &amp;lt;= index &amp;amp;&amp;amp; j &amp;lt;= right){ if(nums[i] &amp;gt; nums[j]){ tmp[k++] = nums[j++]; }else { tmp[k++] = nums[i++]; } } while(i &amp;lt;= index){ tmp[k++] = nums[i++]; } while(j &amp;lt;= right){ tmp[k++] = nums[j++]; } //将tmp复制到nums中 for(int l = left ; l &amp;lt;= right ; l++){ nums[l] = tmp[l-left]; } } } 快排：</description>
-    </item>
-    
-    <item>
-      <title>对于RPC框架的初步理解</title>
-      <link>https://lzy175.github.io/posts/%E5%AF%B9%E4%BA%8Erpc%E6%A1%86%E6%9E%B6%E7%9A%84%E5%88%9D%E6%AD%A5%E7%90%86%E8%A7%A3/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://lzy175.github.io/posts/%E5%AF%B9%E4%BA%8Erpc%E6%A1%86%E6%9E%B6%E7%9A%84%E5%88%9D%E6%AD%A5%E7%90%86%E8%A7%A3/</guid>
-      <description>rpc是指远程过程调用，关注的一般是远程方法调用，微服务会将一个项目服务分成几个规模较小的服务，把这些服务分别部署在不同的服务器中，来达到一种解耦合提高效率的目的，但是不同的服务之间一定会有交互，通过这种交互来完成系统的整体性，这种交互过程有时候就是一个服务得区调用另一个服务的方法，就是在一台服务器上，调用另一台服务器的某个方法，RPC就是这样一种框架，通过RPC可以在本地计算机上调用远程计算机上某个服务的方法。
-RPC通常包括两类协议：1、传输协议和 序列化协议
-传输协议：
-著名的grpc，底层使用的就是http2协议；dubbo一类的是使用自定义报文的tcp协议。
-序列化协议
-基于文本编码的josn协议；二进制编码的protobuf、hession协议；针对java高性能高吞吐量的kryo和ftc协议。
-既然有HTTP，为啥还要用RPC进行服务调用？
-他们俩到底是哪里有差别？
-五层协议体系：应用层，传输层，网络层，数据链路层，物理层。
-应用层的任务是通过应用进程之间的交互来完成特定的网络应用。http就是应用层协议，使用TCP/IP通信协议来传递数据。
-传输层的主要任务就是为两台主机之间的通信提供通用的数据传输服务。TCP就是传输层协议。
-关键的差别就在于HTTP使用的TCP协议，RPC网络使用的自定义报文的TCP协议：
-http1.1协议的TCP报文包含太多在传输过程中可能无用的信息，使用自定的报文进行传输就会避免这个问题，极大减轻了数据传输的开销。在这点上RPC直接是提高了信息交换效率。除此之外，RPC框架还提供了&amp;quot;服务自动注册与发现&amp;quot;、“智能负载均衡”，“可视化的服务治理和运维”，“运行期流量调度”等功能。
-RPC框架的基本架构部件是三个，注册中心、客户端和服务端：
-三者交互方式：
-1、服务端启动后，会将他提供的服务列表发布到注册中心，客户端向注册中心订阅服务地址；
-2、客户端会通过本地代理模块Proxy调用服务端，Proxy模块负责将方法。参数等数据转化为网络字节流；
-3、客户端从服务列表选取其中一个服务地址（通过负载均衡算法），并将数据通过网络发送给服务端；
-4、服务端收到数据后进行解码，得到请求信息；
-5、服务端根据解码后的请求信息调用对应的服务，然后将调用结果返回给客户端。
-交互过程：
-1、客户端（client）以本地调用方式调用服务；
-2、client stub接受到调用后负责将方法、参数封装成能够进行网络传输的消息体；
-3、client stub将消息进行编码并发送到服务端；
-4、server stub收到消息后进行解码；
-5、server stub根据解码结果调用本地服务；
-6、本地服务执行方法并将结果返回给server stub；
-7、server stub将返回结果进行编码并发送给消费方；
-8、client stub接受消息进行解码；
-9、服务消费方（client）得到结果。</description>
     </item>
     
   </channel>
