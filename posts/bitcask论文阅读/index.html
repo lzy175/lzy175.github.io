@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en-us">
+	<head>
+    <meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="author" content="ZhuoY Li">
+<meta name="description" content="It&#39;s never too late to learn.">
+<meta name="generator" content="Hugo 0.101.0" />
+<title>《Bitcask A Log-Structured Hash Table for Fast Key/Value Data》论文阅读</title>
+<link rel="shortcut icon" href="https://lzy175.github.io/images/favicon.ico">
+<link rel="stylesheet" href="https://lzy175.github.io/css/style.css">
+<link rel="stylesheet" href="https://lzy175.github.io/css/highlight.css">
+
+
+
+<link rel="stylesheet" href="https://lzy175.github.io/css/monosocialiconsfont.css">
+
+
+
+<link href="https://lzy175.github.io/index.xml" rel="alternate" type="application/rss+xml" title="Hugo Cactus Theme" />
+
+
+<meta property="og:title" content="《Bitcask A Log-Structured Hash Table for Fast Key/Value Data》论文阅读" />
+<meta property="og:description" content="ssssssredis学习过程中偶然看到了github上一个基于bitcask的开源nosql项目，叫做rosedb，之前对除redis以外的nosql基本没有了解，趁此机会阅读下Bitcast这篇经典论文。
+Bitcask 是一个日志型、基于hash表结构的key-value存储模型，以Bitcask为存储模型的K-V系统有 Riak 和 beansdb 新版本。
+日志型数据存储 什么叫日志型数据存储，就是append only，所有写操作只追加而不修改老的数据，就像我们的各种服务器日志一样。在Bitcask模型中，数据文件以日志型只增不减的写入文件，而文件有一定的大小限制，当文件大小增加到相应的限制时，就会产生一个新的文件，老的文件将只读不写。在任意时间点，只有一个文件是可写的，在Bitcask模型中称其为active data file，而其他的已经达到限制大小的文件，称为older data file，如下图：
+文件中的数据结构非常简单，是一条一条的数据写入操作，每一条数据的结构如下：
+上面数据项分别为key，value，key的大小，value的大小，时间戳（应该是），以及对前面几项做的crc校验值。（数据删除操作也不会删除旧的条目，而是将value设定为一个特殊的值以作标示） 数据文件中就是连续一条条上面格式的数据，如下图：
+上面就是日志型的数据文件，但文件这样持续的存下去，肯定是会无限膨胀的，为了解决个问题，和其他日志型存储系统一样Bitcask也有一个定期的merge操作。
+merge操作，即定期将所有older data file中的数据扫描一遍并生成新的data file（没有包括active data file 是因为它还在不停写入），这里的merge其实就是将对同一个key的多个操作以只保留最新一个的原则进行删除。每次merge后，新生成的数据文件就不再有冗余数据了。
+事实上，Bitcask 中有两类文件：
+xxx.w：即上面说的数据文件，xxx 是一个数值，写满1G后将新建文件，数值自增，程序往数值最大的一个文件 Append 数据； write.pos：记录当前数值最大的 xxx.w 文件（FileNo），以及该文件的写位移（Offset），方便在写数据的时候快速定位； 定义了数据文件和记录写位移的文件后，通过以下方式实现数据写：
+检查当前 xxx.w 文件写位移 &#43; 当前要写入的数据长度是否大于MAX_FILE_SIZE（即一个数据文件的最大size，这里我们定义为1G）；如果大于则创建一个序号增 1 的 .w 文件； 调用 open、write 函数将数据追加到当前 .w 文件结尾； 更新 write.pos 中 FileNo、Offset 的值； 基于hash表的索引数据 写操作有 write.pos 文件指明要写入的 FileNo 和 Offset；但对于读操作，如何快速地从数据中，找到某个 key 对应数据所在的文件和文件位移呢，这要依赖于内存中的hash表数据索引，如下图
+hash表对应的这个结构中包括了三个用于定位数据value的信息，分别是文件id号(file_id)，value值在文件中的位置（value_pos）,value值的大小（value_sz），于是我们通过读取file_id对应文件的value_pos开始的value_sz个字节，就得到了我们需要的value值。整个过程如下图所示：
+由于多了一个hash表的存在，我们的写操作就需要多更新一块内容，即这个hash表的对应关系。于是一个写操作就需要进行一次顺序的磁盘写入和一次内存操作。
+另外，由于索引hash表是存放在内存中的，每次进程重启时需要重建hash表，这需要整个扫描一遍所有的数据文件，如果数据文件很大，这将是一个非常耗时的过程。因此Bitcask模型中包含了一个称作hint file的部分，目的在于提高重建hash表的速度。
+上面讲到在old data file进行merge操作时，会产生新的data file，而Bitcask模型实际还鼓励生成一个hint file，这个hint file中每一项的数据结构，与data file中的数据结构非常相似，不同的是他并不存储具体的value值，而是存储value的位置，这样，在重建hash表时，就不需要再扫描所有data file文件，而仅仅需要将hint file中的数据一行行读取并重建即可。大大提高了利用数据文件重启数据库的速度。" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://lzy175.github.io/posts/bitcask%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2021-03-20T10:10:55+08:00" />
+<meta property="article:modified_time" content="2021-03-20T10:10:55+08:00" />
+
+
+
+<meta itemprop="name" content="《Bitcask A Log-Structured Hash Table for Fast Key/Value Data》论文阅读">
+<meta itemprop="description" content="ssssssredis学习过程中偶然看到了github上一个基于bitcask的开源nosql项目，叫做rosedb，之前对除redis以外的nosql基本没有了解，趁此机会阅读下Bitcast这篇经典论文。
+Bitcask 是一个日志型、基于hash表结构的key-value存储模型，以Bitcask为存储模型的K-V系统有 Riak 和 beansdb 新版本。
+日志型数据存储 什么叫日志型数据存储，就是append only，所有写操作只追加而不修改老的数据，就像我们的各种服务器日志一样。在Bitcask模型中，数据文件以日志型只增不减的写入文件，而文件有一定的大小限制，当文件大小增加到相应的限制时，就会产生一个新的文件，老的文件将只读不写。在任意时间点，只有一个文件是可写的，在Bitcask模型中称其为active data file，而其他的已经达到限制大小的文件，称为older data file，如下图：
+文件中的数据结构非常简单，是一条一条的数据写入操作，每一条数据的结构如下：
+上面数据项分别为key，value，key的大小，value的大小，时间戳（应该是），以及对前面几项做的crc校验值。（数据删除操作也不会删除旧的条目，而是将value设定为一个特殊的值以作标示） 数据文件中就是连续一条条上面格式的数据，如下图：
+上面就是日志型的数据文件，但文件这样持续的存下去，肯定是会无限膨胀的，为了解决个问题，和其他日志型存储系统一样Bitcask也有一个定期的merge操作。
+merge操作，即定期将所有older data file中的数据扫描一遍并生成新的data file（没有包括active data file 是因为它还在不停写入），这里的merge其实就是将对同一个key的多个操作以只保留最新一个的原则进行删除。每次merge后，新生成的数据文件就不再有冗余数据了。
+事实上，Bitcask 中有两类文件：
+xxx.w：即上面说的数据文件，xxx 是一个数值，写满1G后将新建文件，数值自增，程序往数值最大的一个文件 Append 数据； write.pos：记录当前数值最大的 xxx.w 文件（FileNo），以及该文件的写位移（Offset），方便在写数据的时候快速定位； 定义了数据文件和记录写位移的文件后，通过以下方式实现数据写：
+检查当前 xxx.w 文件写位移 &#43; 当前要写入的数据长度是否大于MAX_FILE_SIZE（即一个数据文件的最大size，这里我们定义为1G）；如果大于则创建一个序号增 1 的 .w 文件； 调用 open、write 函数将数据追加到当前 .w 文件结尾； 更新 write.pos 中 FileNo、Offset 的值； 基于hash表的索引数据 写操作有 write.pos 文件指明要写入的 FileNo 和 Offset；但对于读操作，如何快速地从数据中，找到某个 key 对应数据所在的文件和文件位移呢，这要依赖于内存中的hash表数据索引，如下图
+hash表对应的这个结构中包括了三个用于定位数据value的信息，分别是文件id号(file_id)，value值在文件中的位置（value_pos）,value值的大小（value_sz），于是我们通过读取file_id对应文件的value_pos开始的value_sz个字节，就得到了我们需要的value值。整个过程如下图所示：
+由于多了一个hash表的存在，我们的写操作就需要多更新一块内容，即这个hash表的对应关系。于是一个写操作就需要进行一次顺序的磁盘写入和一次内存操作。
+另外，由于索引hash表是存放在内存中的，每次进程重启时需要重建hash表，这需要整个扫描一遍所有的数据文件，如果数据文件很大，这将是一个非常耗时的过程。因此Bitcask模型中包含了一个称作hint file的部分，目的在于提高重建hash表的速度。
+上面讲到在old data file进行merge操作时，会产生新的data file，而Bitcask模型实际还鼓励生成一个hint file，这个hint file中每一项的数据结构，与data file中的数据结构非常相似，不同的是他并不存储具体的value值，而是存储value的位置，这样，在重建hash表时，就不需要再扫描所有data file文件，而仅仅需要将hint file中的数据一行行读取并重建即可。大大提高了利用数据文件重启数据库的速度。"><meta itemprop="datePublished" content="2021-03-20T10:10:55+08:00" />
+<meta itemprop="dateModified" content="2021-03-20T10:10:55+08:00" />
+<meta itemprop="wordCount" content="76">
+<meta itemprop="keywords" content="" />
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="《Bitcask A Log-Structured Hash Table for Fast Key/Value Data》论文阅读"/>
+<meta name="twitter:description" content="ssssssredis学习过程中偶然看到了github上一个基于bitcask的开源nosql项目，叫做rosedb，之前对除redis以外的nosql基本没有了解，趁此机会阅读下Bitcast这篇经典论文。
+Bitcask 是一个日志型、基于hash表结构的key-value存储模型，以Bitcask为存储模型的K-V系统有 Riak 和 beansdb 新版本。
+日志型数据存储 什么叫日志型数据存储，就是append only，所有写操作只追加而不修改老的数据，就像我们的各种服务器日志一样。在Bitcask模型中，数据文件以日志型只增不减的写入文件，而文件有一定的大小限制，当文件大小增加到相应的限制时，就会产生一个新的文件，老的文件将只读不写。在任意时间点，只有一个文件是可写的，在Bitcask模型中称其为active data file，而其他的已经达到限制大小的文件，称为older data file，如下图：
+文件中的数据结构非常简单，是一条一条的数据写入操作，每一条数据的结构如下：
+上面数据项分别为key，value，key的大小，value的大小，时间戳（应该是），以及对前面几项做的crc校验值。（数据删除操作也不会删除旧的条目，而是将value设定为一个特殊的值以作标示） 数据文件中就是连续一条条上面格式的数据，如下图：
+上面就是日志型的数据文件，但文件这样持续的存下去，肯定是会无限膨胀的，为了解决个问题，和其他日志型存储系统一样Bitcask也有一个定期的merge操作。
+merge操作，即定期将所有older data file中的数据扫描一遍并生成新的data file（没有包括active data file 是因为它还在不停写入），这里的merge其实就是将对同一个key的多个操作以只保留最新一个的原则进行删除。每次merge后，新生成的数据文件就不再有冗余数据了。
+事实上，Bitcask 中有两类文件：
+xxx.w：即上面说的数据文件，xxx 是一个数值，写满1G后将新建文件，数值自增，程序往数值最大的一个文件 Append 数据； write.pos：记录当前数值最大的 xxx.w 文件（FileNo），以及该文件的写位移（Offset），方便在写数据的时候快速定位； 定义了数据文件和记录写位移的文件后，通过以下方式实现数据写：
+检查当前 xxx.w 文件写位移 &#43; 当前要写入的数据长度是否大于MAX_FILE_SIZE（即一个数据文件的最大size，这里我们定义为1G）；如果大于则创建一个序号增 1 的 .w 文件； 调用 open、write 函数将数据追加到当前 .w 文件结尾； 更新 write.pos 中 FileNo、Offset 的值； 基于hash表的索引数据 写操作有 write.pos 文件指明要写入的 FileNo 和 Offset；但对于读操作，如何快速地从数据中，找到某个 key 对应数据所在的文件和文件位移呢，这要依赖于内存中的hash表数据索引，如下图
+hash表对应的这个结构中包括了三个用于定位数据value的信息，分别是文件id号(file_id)，value值在文件中的位置（value_pos）,value值的大小（value_sz），于是我们通过读取file_id对应文件的value_pos开始的value_sz个字节，就得到了我们需要的value值。整个过程如下图所示：
+由于多了一个hash表的存在，我们的写操作就需要多更新一块内容，即这个hash表的对应关系。于是一个写操作就需要进行一次顺序的磁盘写入和一次内存操作。
+另外，由于索引hash表是存放在内存中的，每次进程重启时需要重建hash表，这需要整个扫描一遍所有的数据文件，如果数据文件很大，这将是一个非常耗时的过程。因此Bitcask模型中包含了一个称作hint file的部分，目的在于提高重建hash表的速度。
+上面讲到在old data file进行merge操作时，会产生新的data file，而Bitcask模型实际还鼓励生成一个hint file，这个hint file中每一项的数据结构，与data file中的数据结构非常相似，不同的是他并不存储具体的value值，而是存储value的位置，这样，在重建hash表时，就不需要再扫描所有data file文件，而仅仅需要将hint file中的数据一行行读取并重建即可。大大提高了利用数据文件重启数据库的速度。"/>
+<meta name="twitter:site" content="@https://www.twitter.com/"/>
+
+
+    </head>
+<body>
+    <nav class="main-nav">
+	
+		<a href='https://lzy175.github.io/'> <span class="arrow">←</span>Home</a>
+	
+
+	
+
+	
+		<a class="cta" href="https://lzy175.github.io/index.xml">Subscribe</a>
+	
+</nav>
+
+    <section id="wrapper">
+        
+        
+<article class="post">
+    <header>
+        <h1>《Bitcask A Log-Structured Hash Table for Fast Key/Value Data》论文阅读</h1>
+        <h2 class="subtitle"></h2>
+        <h2 class="headline">
+        March 20, 2021
+        <br>
+        
+        </h2>
+    </header>
+    <section id="post-body">
+        <p>ssssssredis学习过程中偶然看到了github上一个基于bitcask的开源nosql项目，叫做rosedb，之前对除redis以外的nosql基本没有了解，趁此机会阅读下Bitcast这篇经典论文。</p>
+<p>Bitcask 是一个日志型、基于hash表结构的key-value存储模型，以Bitcask为存储模型的K-V系统有 <a href="https://github.com/basho/riak">Riak </a>和 <a href="https://github.com/douban/beansdb">beansdb </a>新版本。</p>
+<h2 id="日志型数据存储">日志型数据存储</h2>
+<p>什么叫日志型数据存储，就是append only，所有写操作只追加而不修改老的数据，就像我们的各种服务器日志一样。在Bitcask模型中，数据文件以日志型只增不减的写入文件，而文件有一定的大小限制，当文件大小增加到相应的限制时，就会产生一个新的文件，老的文件将只读不写。在任意时间点，只有一个文件是可写的，在Bitcask模型中称其为active data file，而其他的已经达到限制大小的文件，称为older data file，如下图：</p>
+<p><img src="/img//bitcask%E8%AE%BA%E6%96%87/1.png" alt=""></p>
+<p>文件中的数据结构非常简单，是一条一条的数据写入操作，每一条数据的结构如下：</p>
+<p><img src="/img//bitcask%E8%AE%BA%E6%96%87/2.png" alt=""></p>
+<p>上面数据项分别为key，value，key的大小，value的大小，时间戳（应该是），以及对前面几项做的crc校验值。（数据删除操作也不会删除旧的条目，而是将value设定为一个特殊的值以作标示）
+数据文件中就是连续一条条上面格式的数据，如下图：</p>
+<p><img src="/img//bitcask%E8%AE%BA%E6%96%87/3.png" alt=""></p>
+<p>上面就是日志型的数据文件，但文件这样持续的存下去，肯定是会无限膨胀的，为了解决个问题，和其他日志型存储系统一样Bitcask也有一个定期的merge操作。</p>
+<p>merge操作，即定期将所有older data file中的数据扫描一遍并生成新的data file（没有包括active data file 是因为它还在不停写入），这里的merge其实就是将对同一个key的多个操作以只保留最新一个的原则进行删除。每次merge后，新生成的数据文件就不再有冗余数据了。</p>
+<p>事实上，Bitcask 中有两类文件：</p>
+<ul>
+<li>xxx.w：即上面说的数据文件，xxx 是一个数值，写满1G后将新建文件，数值自增，程序往数值最大的一个文件 Append 数据；</li>
+<li>write.pos：记录当前数值最大的 xxx.w 文件（FileNo），以及该文件的写位移（Offset），方便在写数据的时候快速定位；</li>
+</ul>
+<p>定义了数据文件和记录写位移的文件后，通过以下方式实现数据写：</p>
+<ul>
+<li>检查当前 xxx.w 文件写位移 + 当前要写入的数据长度是否大于MAX_FILE_SIZE（即一个数据文件的最大size，这里我们定义为1G）；如果大于则创建一个序号增 1 的 .w 文件；</li>
+<li>调用 open、write 函数将数据追加到当前 .w 文件结尾；</li>
+<li>更新 write.pos 中 FileNo、Offset 的值；</li>
+</ul>
+<h2 id="基于hash表的索引数据">基于hash表的索引数据</h2>
+<p>写操作有 write.pos 文件指明要写入的 FileNo 和 Offset；但对于读操作，如何快速地从数据中，找到某个 key 对应数据所在的文件和文件位移呢，这要依赖于内存中的hash表数据索引，如下图</p>
+<p><img src="/img//bitcask%E8%AE%BA%E6%96%87/4.png" alt=""></p>
+<p>hash表对应的这个结构中包括了三个用于定位数据value的信息，分别是文件id号(file_id)，value值在文件中的位置（value_pos）,value值的大小（value_sz），于是我们通过读取file_id对应文件的value_pos开始的value_sz个字节，就得到了我们需要的value值。整个过程如下图所示：</p>
+<p><img src="/img//bitcask%E8%AE%BA%E6%96%87/5.png" alt=""></p>
+<p>由于多了一个hash表的存在，我们的写操作就需要多更新一块内容，即这个hash表的对应关系。于是一个写操作就需要进行一次顺序的磁盘写入和一次内存操作。</p>
+<p>另外，由于索引hash表是存放在内存中的，每次进程重启时需要重建hash表，这需要整个扫描一遍所有的数据文件，如果数据文件很大，这将是一个非常耗时的过程。因此Bitcask模型中包含了一个称作hint file的部分，目的在于提高重建hash表的速度。</p>
+<p>上面讲到在old data file进行merge操作时，会产生新的data file，而Bitcask模型实际还鼓励生成一个hint file，这个hint file中每一项的数据结构，与data file中的数据结构非常相似，不同的是他并不存储具体的value值，而是存储value的位置，这样，在重建hash表时，就不需要再扫描所有data file文件，而仅仅需要将hint file中的数据一行行读取并重建即可。大大提高了利用数据文件重启数据库的速度。</p>
+
+    </section>
+</article>
+
+<footer id="post-meta" class="clearfix">
+    <a href="https://twitter.com/Your%20Twitter%20account">
+    <img class="avatar" src="https://lzy175.github.io/images/avatar.png">
+    <div>
+        <span class="dark">ZhuoY Li</span>
+        <span>I&#39;m an blogger.</span>
+    </div>
+    </a>
+    <section id="sharing">
+        <a class="twitter" href="https://twitter.com/intent/tweet?text=https%3a%2f%2flzy175.github.io%2fposts%2fbitcask%25E8%25AE%25BA%25E6%2596%2587%25E9%2598%2585%25E8%25AF%25BB%2f - %e3%80%8aBitcask%20A%20Log-Structured%20Hash%20Table%20for%20Fast%20Key%2fValue%20Data%e3%80%8b%e8%ae%ba%e6%96%87%e9%98%85%e8%af%bb by @Your%20Twitter%20account"><span class="icon-twitter"> tweet</span></a>
+
+<a class="facebook" href="#" onclick="
+    window.open(
+      'https://www.facebook.com/sharer/sharer.php?u='+encodeURIComponent(location.href),
+      'facebook-share-dialog',
+      'width=626,height=436');
+    return false;"><span class="icon-facebook-rect"> Share</span>
+</a>
+
+    </section>
+</footer>
+
+<div id="disqus_thread"></div>
+<script type="application/javascript">
+    window.disqus_config = function () {
+    
+    
+    
+    };
+    (function() {
+        if (["localhost", "127.0.0.1"].indexOf(window.location.hostname) != -1) {
+            document.getElementById('disqus_thread').innerHTML = 'Disqus comments not available by default when the website is previewed locally.';
+            return;
+        }
+        var d = document, s = d.createElement('script'); s.async = true;
+        s.src = '//' + "spf13" + '.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="https://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+<ul id="post-list" class="archive readmore">
+    <h3>Read more</h3>
+
+    
+    
+    
+        <li>
+            <a href="https://lzy175.github.io/posts/%E6%9C%89%E5%85%B3%E5%8D%95%E4%BE%8B%E6%A8%A1%E5%BC%8F%E5%92%8C%E4%BB%A3%E7%90%86%E6%A8%A1%E5%BC%8F%E7%9A%84%E5%AD%A6%E4%B9%A0/">有关单例模式和代理模式的学习<aside class="dates">Mar 18 2022</aside></a>
+        </li>
+    
+        <li>
+            <a href="https://lzy175.github.io/posts/jdbc%E5%AF%B9%E5%8F%8C%E4%BA%B2%E5%A7%94%E6%B4%BE%E6%A8%A1%E5%9E%8B%E7%9A%84%E7%A0%B4%E5%9D%8F%E5%88%86%E6%9E%90/">JDBC对双亲委派模型的破坏分析<aside class="dates">Mar 15 2022</aside></a>
+        </li>
+    
+        <li>
+            <a href="https://lzy175.github.io/posts/spring%E4%B8%ADbean%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F%E6%BA%90%E7%A0%81%E7%9A%84%E4%BA%86%E8%A7%A3/">Spring中bean生命周期源码的了解<aside class="dates">Jan 15 2022</aside></a>
+        </li>
+    
+        <li>
+            <a href="https://lzy175.github.io/posts/aqs%E6%BA%90%E7%A0%81%E5%88%9D%E6%8E%A2/">AQS源码初探<aside class="dates">Sep 12 2021</aside></a>
+        </li>
+    
+        <li>
+            <a href="https://lzy175.github.io/posts/redis%E5%AE%9E%E7%8E%B0%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81%E4%B8%8E%E5%85%B6%E4%BB%96%E5%AE%9E%E7%8E%B0%E6%96%B9%E6%A1%88/">Redis实现分布式锁与其他实现方案<aside class="dates">Aug 25 2021</aside></a>
+        </li>
+    
+        <li>
+            <a href="https://lzy175.github.io/posts/%E5%AF%B9%E4%BA%8Eredis%E5%AE%9E%E9%99%85%E6%93%8D%E4%BD%9C%E7%9A%84%E5%AD%A6%E4%B9%A0/">对于redis实际操作的学习<aside class="dates">Aug 12 2021</aside></a>
+        </li>
+    
+        <li>
+            <a href="https://lzy175.github.io/posts/%E6%89%8B%E5%86%99rpc%E4%B8%83/">手写RPC---网络传输<aside class="dates">Aug 10 2021</aside></a>
+        </li>
+    
+        <li>
+            <a href="https://lzy175.github.io/posts/%E6%89%8B%E5%86%99rpc%E5%85%AD/">手写RPC---负载均衡<aside class="dates">Jul 30 2021</aside></a>
+        </li>
+    
+        <li>
+            <a href="https://lzy175.github.io/posts/%E6%89%8B%E5%86%99rpc%E4%BA%94/">手写RPC---服务的发布与消费<aside class="dates">Jul 28 2021</aside></a>
+        </li>
+    
+        <li>
+            <a href="https://lzy175.github.io/posts/%E6%89%8B%E5%86%99rpc%E5%9B%9B/">手写RPC---序列化和反序列化<aside class="dates">Jul 25 2021</aside></a>
+        </li>
+    
+</ul>
+
+
+
+        <footer id="footer">
+    
+        <div id="social">
+
+	
+	
+    
+    <a class="symbol" href="https://www.dribbble.com/">
+        circledribble
+    </a>
+    
+    <a class="symbol" href="https://www.facebook.com/">
+        circlefacebook
+    </a>
+    
+    <a class="symbol" href="https://www.github.com/">
+        circlegithub
+    </a>
+    
+    <a class="symbol" href="https://www.twitter.com/">
+        circletwitterbird
+    </a>
+    
+
+
+</div>
+
+    
+    <p class="small">
+    
+        © Copyright 2022 ZhuoY Li
+    
+    </p>
+</footer>
+
+    </section>
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+<script src="https://lzy175.github.io/js/main.js"></script>
+<script src="https://lzy175.github.io/js/highlight.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+
+
+</body>
+</html>
